@@ -295,6 +295,7 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
+
         util.raiseNotDefined()
 
     def isGoalState(self, state):

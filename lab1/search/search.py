@@ -19,6 +19,12 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+class Node:
+    def __init__(self, state, action, parent):
+        self.state = state
+        self.action = action
+        self.parent = parent
+    
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -87,12 +93,81 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+    # create stack and push first node
+    # recurse until no nodes in stack:
+    #   if top node is visited, pop
+    #   if not, mark top node on stack as visited and push all its neighbors
+
+    # you can also do this with a dictionary of tuples where each tuple contains the state and the action and parent
+    # or you can use a dictionary of actions where each state is mapped to a list of actions for how to get there
+    rootState = problem.getStartState()
+    rootNode = Node(rootState, None, None)
+    visited = {'0'}
+    visitedStates = {'0'}
+    stack = util.Stack()
+    stack.push(rootNode)
+    actions = list()
+
+    while(not stack.isEmpty()):
+        top = stack.list[-1]
+        if(problem.isGoalState(top.state)):
+            curr = top
+            while(curr.state != rootState):
+                actions.append(curr.action)
+                curr = curr.parent
+            actions.reverse()
+            break
+        else:
+            if(top in visited):
+                stack.pop()
+            else:
+                visited.add(top)
+                visitedStates.add(top.state)
+                succs = problem.getSuccessors(top.state)
+                for s in succs:
+                    action, nextState = s[1], s[0]
+                    if(nextState not in visitedStates):
+                        nextNode = Node(nextState, action, top)
+                        stack.push(nextNode)
+    return actions
+    #util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    rootState = problem.getStartState()
+    rootNode = Node(rootState, None, None)
+    visited = {'0'}
+    visitedStates = {'0'}
+    queue = util.Queue()
+    queue.push(rootNode)
+    actions = list()
+
+    while(not queue.isEmpty()):
+        front = queue.list[-1]
+        if(problem.isGoalState(front.state)):
+            curr = front
+            while(curr.state != rootState):
+                actions.append(curr.action)
+                curr = curr.parent
+            actions.reverse()
+            break
+        else:
+            if(front in visited):
+                queue.pop()
+            else:
+                visited.add(front)
+                visitedStates.add(front.state)
+                succs = problem.getSuccessors(front.state)
+                for s in succs:
+                    action, nextState = s[1], s[0]
+                    if(nextState not in visitedStates):
+                        nextNode = Node(nextState, action, front)
+                        queue.push(nextNode)
+
+    return actions
+    #util.raiseNotDefined()
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
