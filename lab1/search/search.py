@@ -20,10 +20,11 @@ Pacman agents (in searchAgents.py).
 import util
 
 class Node:
-    def __init__(self, state, action, parent):
+    def __init__(self, state, action, parent, cost):
         self.state = state
         self.action = action
         self.parent = parent
+        self.cost = cost
     
 class SearchProblem:
     """
@@ -124,6 +125,7 @@ def depthFirstSearch(problem):
             else:
                 visited.add(top)
                 visitedStates.add(top.state)
+                print top.state
                 succs = problem.getSuccessors(top.state)
                 for s in succs:
                     action, nextState = s[1], s[0]
@@ -165,14 +167,41 @@ def breadthFirstSearch(problem):
                     if(nextState not in visitedStates):
                         nextNode = Node(nextState, action, front)
                         queue.push(nextNode)
-
     return actions
     #util.raiseNotDefined()
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    rootState = problem.getStartState()
+    rootNode = Node(rootState, None, None, 0)
+    visited = {rootState:rootNode}
+    pq = util.PriorityQueue()
+    pq.push(rootNode, 0)
+    actions = list()
+
+    while(not pq.isEmpty()):
+        front = pq.pop()
+        if(problem.isGoalState(front.state)):
+            curr = front
+            while(curr.state != rootState):
+                actions.append(curr.action)
+                curr = curr.parent
+            actions.reverse()
+            break
+        else:
+            print(visited.keys())
+            visited[front.state] = front
+            succs = problem.getSuccessors(front.state)
+            for s in succs:
+                action, nextState, cost = s[1], s[0], s[2]
+                child = Node(nextState, action, front, front.cost + cost)
+                if((nextState not in visited) or (cost < visited[nextState])):
+                    visited[nextState] = child
+                    pq.push(child, child.cost)
+    return actions
+    #util.raiseNotDefined()
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -184,7 +213,36 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    rootState = problem.getStartState()
+    goalState = problem.goal
+    rootNode = Node(rootState, None, None, 0)
+    visited = {rootState:rootNode}
+    pq = util.PriorityQueue()
+    pq.push(rootNode, 0)
+    actions = list()
+
+    while(not pq.isEmpty()):
+        front = pq.pop()
+        if(problem.isGoalState(front.state)):
+            curr = front
+            while(curr.state != rootState):
+                actions.append(curr.action)
+                curr = curr.parent
+            actions.reverse()
+            break
+        else:
+            print(visited.keys())
+            visited[front.state] = front
+            succs = problem.getSuccessors(front.state)
+            for s in succs:
+                action, nextState, gCost = s[1], s[0], s[2]
+                manhattanCost = gCost + util.manhattanDistance(nextState, goalState)
+                if((nextState not in visited) or (manhattanCost < visited[nextState])):
+                    child = Node(nextState, action, front, manhattanCost)
+                    visited[nextState] = child
+                    pq.push(child, child.cost)
+    return actions
+    #util.raiseNotDefined()
 
 
 # Abbreviations
