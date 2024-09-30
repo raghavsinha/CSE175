@@ -103,7 +103,7 @@ def depthFirstSearch(problem):
     # you can also do this with a dictionary of tuples where each tuple contains the state and the action and parent
     # or you can use a dictionary of actions where each state is mapped to a list of actions for how to get there
     rootState = problem.getStartState()
-    rootNode = Node(rootState, None, None)
+    rootNode = Node(rootState, None, None, 0)
     visited = {'0'}
     visitedStates = {'0'}
     stack = util.Stack()
@@ -125,12 +125,11 @@ def depthFirstSearch(problem):
             else:
                 visited.add(top)
                 visitedStates.add(top.state)
-                print top.state
                 succs = problem.getSuccessors(top.state)
                 for s in succs:
                     action, nextState = s[1], s[0]
                     if(nextState not in visitedStates):
-                        nextNode = Node(nextState, action, top)
+                        nextNode = Node(nextState, action, top, 0)
                         stack.push(nextNode)
     return actions
     #util.raiseNotDefined()
@@ -139,7 +138,7 @@ def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
     rootState = problem.getStartState()
-    rootNode = Node(rootState, None, None)
+    rootNode = Node(rootState, None, None, 0)
     visited = {'0'}
     visitedStates = {'0'}
     queue = util.Queue()
@@ -165,7 +164,7 @@ def breadthFirstSearch(problem):
                 for s in succs:
                     action, nextState = s[1], s[0]
                     if(nextState not in visitedStates):
-                        nextNode = Node(nextState, action, front)
+                        nextNode = Node(nextState, action, front, 0)
                         queue.push(nextNode)
     return actions
     #util.raiseNotDefined()
@@ -190,7 +189,6 @@ def uniformCostSearch(problem):
             actions.reverse()
             break
         else:
-            print(visited.keys())
             visited[front.state] = front
             succs = problem.getSuccessors(front.state)
             for s in succs:
@@ -231,7 +229,6 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             actions.reverse()
             break
         else:
-            print(visited.keys())
             visited[front.state] = front
             succs = problem.getSuccessors(front.state)
             for s in succs:
