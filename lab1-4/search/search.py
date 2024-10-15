@@ -135,38 +135,73 @@ def depthFirstSearch(problem):
     #util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    rootState = problem.getStartState()
-    rootNode = Node(rootState, None, None, 0)
-    visited = {'0'}
-    visitedStates = {'0'}
+    #create  queue
     queue = util.Queue()
-    queue.push(rootNode)
-    actions = list()
+    #push starting node into it
+    queue.push(problem.getStartState())
+    #create another queue to keep track of every path ran by the search
+    path = util.Queue()
+    #create a list of reached nodes
+    reached = []
+    #create the final path list that will contain the correct direction list to return
+    fpath = []
+    #set the current node to the starting node
+    currnode = queue.pop()
+    #loop until the current node is the goal state
+    while not problem.isGoalState(currnode):
+        #check if the current node has not been reached yet
+        if currnode not in reached:
+            #if it hasn't, add it to the reached list
+            reached.append(currnode)
+            #loop through the children of the current node
+            children = problem.getSuccessors(currnode)
+            for child in children:
+                #check if the child node has not been reached yet
+                if child[0] not in reached:
+                    #add the current path of this loop, taking the current final path and adding the current child node to it
+                    path.push(fpath + [child[1]])
+                    #if it hasn't, push the child node into the queue
+                    queue.push(child[0])
+        #update the final path to the new current path
+        fpath = path.pop()
+        #update the current node to the next node in the queue
+        currnode = queue.pop() 
+    #return the final path
+    return fpath
 
-    while(not queue.isEmpty()):
-        front = queue.list[-1]
-        if(problem.isGoalState(front.state)):
-            curr = front
-            while(curr.state != rootState):
-                actions.append(curr.action)
-                curr = curr.parent
-            actions.reverse()
-            break
-        else:
-            if(front in visited):
-                queue.pop()
-            else:
-                visited.add(front)
-                visitedStates.add(front.state)
-                succs = problem.getSuccessors(front.state)
-                for s in succs:
-                    action, nextState = s[1], s[0]
-                    if(nextState not in visitedStates):
-                        nextNode = Node(nextState, action, front, 0)
-                        queue.push(nextNode)
-    return actions
+def breadthFirstSearch1(problem):
+   """Search the shallowest nodes in the search tree first."""
+   "*** YOUR CODE HERE ***"
+   rootState = problem.getStartState()
+   rootNode = Node(rootState, None, None, 0)
+   visited = {'0'}
+   visitedStates = {'0'}
+   queue = util.Queue()
+   queue.push(rootNode)
+   actions = list()
+
+   while(not queue.isEmpty()):
+       front = queue.list[-1]
+       if(problem.isGoalState(front.state)):
+           curr = front
+           while(curr.state != rootState):
+               actions.append(curr.action)
+               curr = curr.parent
+           actions.reverse()
+           break
+       else:
+           if(front in visited):
+               queue.pop()
+           else:
+               visited.add(front)
+               visitedStates.add(front.state)
+               succs = problem.getSuccessors(front.state)
+               for s in succs:
+                   action, nextState = s[1], s[0]
+                   if(nextState not in visitedStates):
+                       nextNode = Node(nextState, action, front, 0)
+                       queue.push(nextNode)
+   return actions
     #util.raiseNotDefined()
 
 def uniformCostSearch(problem):
@@ -210,9 +245,52 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
+    #create priority queue
+    priorityq = util.PriorityQueue()
+    #push starting node into it with a cost of 0 (starting location)
+    priorityq.push(problem.getStartState(), 0)
+    #create another priority queue to keep track of every path ran by the search, along with each paths cost
+    path = util.PriorityQueue()
+    #create a list of reached nodes
+    reached = []
+    #create the final path list that will contain the correct direction list to return
+    fpath = []
+    #set the current node to the starting node
+    currnode = priorityq.pop()
+    #loop until the current node is the goal state
+    while not problem.isGoalState(currnode):
+        #check if the current node has not been reached yet
+        if currnode not in reached:
+            #if it hasn't, add it to the reached list
+            reached.append(currnode)
+            #loop through the children of the current node
+            for child in problem.getSuccessors(currnode):
+                #calculate the path cost of the current final path, now including the current child node
+                cost = problem.getCostOfActions(fpath + [child[1]])
+
+                #HEURISTIC CHECK
+                #check if heuristic is not NULL
+                if heuristic is not nullHeuristic:
+                    #calculate the heuristic using the heuristic(state,problem) function and add it to the path cost
+                    cost = cost + heuristic(child[0], problem)
+
+                #check if the child node has not been reached yet
+                if child[0] not in reached:
+                    #add the current path of this loop, taking the current final path and adding the current child node to it, as well as its cost
+                    path.push(fpath + [child[1]], cost)
+                    #if it hasn't, push the child node into the priority queue along with the calculated cost
+                    priorityq.push(child[0], cost)
+        #update the final path to the new current path
+        fpath = path.pop()
+        #update the current node to the next node in the priority queue
+        currnode = priorityq.pop() 
+    #return the final path
+    return fpath
+
+def aStarSearch1(problem, heuristic=nullHeuristic):
+    """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     rootState = problem.getStartState()
-    goalState = problem.goal
     rootNode = Node(rootState, None, None, 0)
     visited = {rootState:rootNode}
     pq = util.PriorityQueue()
@@ -233,13 +311,13 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             succs = problem.getSuccessors(front.state)
             for s in succs:
                 action, nextState, gCost = s[1], s[0], s[2]
-                manhattanCost = gCost + util.manhattanDistance(nextState, goalState)
-                if((nextState not in visited) or (manhattanCost < visited[nextState])):
-                    child = Node(nextState, action, front, manhattanCost)
+                heuristicCost = gCost + heuristic(nextState, problem)
+                if((nextState not in visited) or (heuristicCost < visited[nextState])):
+                    child = Node(nextState, action, front, heuristicCost)
                     visited[nextState] = child
                     pq.push(child, child.cost)
     return actions
-    #util.raiseNotDefined()
+#     #util.raiseNotDefined()
 
 
 # Abbreviations
