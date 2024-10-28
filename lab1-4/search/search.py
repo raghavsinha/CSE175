@@ -243,7 +243,7 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
-def aStarSearch(problem, heuristic=nullHeuristic):
+def aStarSearch1(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     #create priority queue
     priorityq = util.PriorityQueue()
@@ -287,7 +287,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     #return the final path
     return fpath
 
-def aStarSearch1(problem, heuristic=nullHeuristic):
+def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     rootState = problem.getStartState()
