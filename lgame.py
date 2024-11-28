@@ -17,8 +17,7 @@ def invalidCoordinate(coord, gameState, agent):
     return i < 0 or i > 3 or j < 0 or j > 3 or (gameState[i][j] != BLANK and gameState[i][j] != agent)
 
 def evaluateAction(gameState, nextGameState):
-    getSuccess
-
+    getSuccessors
 
 def getAction(gameState):
     def minimax():
@@ -92,10 +91,13 @@ def getSuccessors(gameState, agent):
             valid = True
             for c in orientation: # validating coordinates in orientation
                 if(invalidCoordinate(c, gameState, agent)):
-                    valid = false
+                    valid = False
                     break
             if(valid):
                 validOrientations.add(orientation)
+
+    if(len(validOrientations) == 0):
+        return []
 
     successorStates = []
     for o in validOrientations:
@@ -129,7 +131,6 @@ def isValidMoveFormat(move):
         return False
 
     return True
-
 
 def isValidMove(gameState, agent, move):
     if(isValidMoveFormat(move)):
@@ -170,3 +171,6 @@ def isValidMove(gameState, agent, move):
         return False
     
     return True
+
+
+#adsjoajdiojasdjoaisdjf
