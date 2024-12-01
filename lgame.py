@@ -15,6 +15,7 @@ DOT = 3
 INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 
 def printBoard(board):
+    print(Style.RESET_ALL, end="")
     for i in board:
         for j in i:
             if j == 0:
@@ -37,7 +38,7 @@ def applyMove(board, move, agent):
     for i in range(0, 4):
         for j in range(0, 4):
             if(board[i][j] == agent):
-                board[i][j] == 0
+                board[i][j] = 0
 
     #1 2 E 4 3 1 1
     xMove = int(move[0]) - 1
@@ -45,26 +46,24 @@ def applyMove(board, move, agent):
     orientation = move[4]
     lCoords = [(xMove, yMove)]
 
-    lCoords = []
     if(orientation == 'E'):
-        lCoords.extend([(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)])
+        lCoords.extend([(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)])
     elif(orientation == 'S'):
         lCoords.extend([(xMove + 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)])
     elif(orientation == 'W'):
-        lCoords.extend([(xMove, yMove - 1), (xMove + 1, yMove), (xMove + 2, yMove)])
+        lCoords.extend([(xMove, yMove - 1), (xMove - 1, yMove), (xMove - 2, yMove)])
     elif(orientation == 'N'):
         lCoords.extend([(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)])
 
     for coord in lCoords:
         board[coord[0]][coord[1]] = agent
-        xMove = int(move[0]) - 1
-        yMove = int(move[2]) - 1
+    
     if(len(move) > 5):
         board[neutral[0]][neutral[1]] = 0
         dotInit = (int(move[6]) - 1, int(move[8]) - 1)
         dotFinal = (int(move[10]) - 1, int(move[12]) - 1)
         board[dotInit[0]][dotInit[1]] = 0
-        board[dotFinal[0]][dotFinal[1]] = 2
+        board[dotFinal[0]][dotFinal[1]] = 3
 
 def playGame():
     board = INITIAL_STATE.copy()
@@ -84,8 +83,6 @@ def playGame():
             else: agent = 1
         else:
             print("Invalid move. Try again.")
-
-
 
 def invalidCoordinate(coord, gameState, agent):
     i = coord[0], j = coord[1]
@@ -223,7 +220,6 @@ def isValidMove(gameState, agent, move):
 
         legalLCoords = True
         for c in lCoords:
-            print("lCoords: ", lCoords, ", c:", c)
             if(c[0] < 0 or c[0] > 3 or c[1] < 0 or c[1] > 3):
                 legalLCoords = False
                 break
