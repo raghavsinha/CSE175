@@ -31,11 +31,61 @@ def printBoard(board):
                 print(Style.RESET_ALL, end="")
         print("")
 
-def playGame():
-    print("Board:")
+def applyMove(board, move, agent):
+    #resetting current agent position in board
+    neutral = (-1, -1)
+    for i in range(0, 4):
+        for j in range(0, 4):
+            if(board[i][j] == agent):
+                board[i][j] == 0
 
+    #1 2 E 4 3 1 1
+    xMove = int(move[0]) - 1
+    yMove = int(move[2]) - 1
+    orientation = move[4]
+    lCoords = [(xMove, yMove)]
+
+    lCoords = []
+    if(orientation == 'E'):
+        lCoords.extend([(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)])
+    elif(orientation == 'S'):
+        lCoords.extend([(xMove + 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)])
+    elif(orientation == 'W'):
+        lCoords.extend([(xMove, yMove - 1), (xMove + 1, yMove), (xMove + 2, yMove)])
+    elif(orientation == 'N'):
+        lCoords.extend([(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)])
+
+    for coord in lCoords:
+        board[coord[0]][coord[1]] = agent
+        xMove = int(move[0]) - 1
+        yMove = int(move[2]) - 1
+    if(len(move) > 5):
+        board[neutral[0]][neutral[1]] = 0
+        dotInit = (int(move[6]) - 1, int(move[8]) - 1)
+        dotFinal = (int(move[10]) - 1, int(move[12]) - 1)
+        board[dotInit[0]][dotInit[1]] = 0
+        board[dotFinal[0]][dotFinal[1]] = 2
+
+def playGame():
     board = INITIAL_STATE.copy()
-    printBoard(board)
+    move = ""
+    agent = 1
+    while(move != "quit"):
+        print("Board:")
+        printBoard(board)
+        print("")
+
+        move = input("Enter move: ")
+        if(move == "quit"): break
+
+        if(isValidMove(board, agent, move)):
+            applyMove(board, move, agent)
+            if(agent == 1): agent = 2
+            else: agent = 1
+        else:
+            print("Invalid move. Try again.")
+
+
 
 def invalidCoordinate(coord, gameState, agent):
     i = coord[0], j = coord[1]
@@ -85,13 +135,13 @@ def getLegalDotPos(gameState):
     for i in gameState:
        for j in gameState[i]:
            if(gameState[i][j] == BLANK or (i, j) == dot1):
-              validDotPositions.add(((i, j), dot2))
+              validDotPositions.append(((i, j), dot2))
 
     # finding valid dot 2 pos
     for i in gameState:
        for j in gameState[i]:
            if(gameState[i][j] == BLANK or (i, j) == dot2):
-              validDotPositions.add(dot1, (i, j))
+              validDotPositions.append(dot1, (i, j))
 
     return validDotPositions
 
@@ -101,7 +151,7 @@ def getSuccessors(gameState, agent):
     for i in gameState:
         for j in gameState[i]:
             if(not invalidCoordinate((i,j), gameState, agent)):
-                validLPositions.add((i, j))
+                validLPositions.append((i, j))
     
     validOrientations = []
     for coord in validLPositions:
@@ -121,7 +171,7 @@ def getSuccessors(gameState, agent):
                     valid = False
                     break
             if(valid):
-                validOrientations.add(orientation)
+                validOrientations.append(orientation)
 
     if(len(validOrientations) == 0):
         return []
@@ -133,7 +183,7 @@ def getSuccessors(gameState, agent):
         nextGameState[o[1][0]][o[1][1]] = agent
         nextGameState[o[2][0]][o[2][1]] = agent
         nextGameState[o[3][0]][o[3][1]] = agent
-        successorStates.add(nextGameState) # no dot change
+        successorStates.append(nextGameState) # no dot change
 
         validDotPositions = getLegalDotPos(nextGameState)
     return successorStates
@@ -163,16 +213,17 @@ def isValidMove(gameState, agent, move):
         orientation = move[4]
         lCoords = [(xMove, yMove)]
         if(orientation == 'E'):
-            lCoords.add([(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)])
+            lCoords.extend([(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)])
         elif(orientation == 'S'):
-            lCoords.add([(xMove + 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)])
+            lCoords.extend([(xMove + 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)])
         elif(orientation == 'W'):
-            lCoords.add([(xMove, yMove - 1), (xMove + 1, yMove), (xMove + 2, yMove)])
+            lCoords.extend([(xMove, yMove - 1), (xMove - 1, yMove), (xMove - 2, yMove)])
         elif(orientation == 'N'):
-            lCoords.add([(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)])
+            lCoords.extend([(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)])
 
         legalLCoords = True
         for c in lCoords:
+            print("lCoords: ", lCoords, ", c:", c)
             if(c[0] < 0 or c[0] > 3 or c[1] < 0 or c[1] > 3):
                 legalLCoords = False
                 break
@@ -196,6 +247,5 @@ def isValidMove(gameState, agent, move):
         return False
     
     return True
-
 
 playGame()
