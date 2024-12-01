@@ -1,4 +1,6 @@
 import re
+import colorama
+from colorama import Fore, Back, Style
 
 # Key:
 # 0 - blank
@@ -12,12 +14,36 @@ RED = 2
 DOT = 3
 INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 
+def printBoard(board):
+    for i in board:
+        for j in i:
+            if j == 0:
+                print("*", end=" ")
+                print(Style.RESET_ALL, end="")
+            elif j == 1:
+                print(Fore.BLUE + "█", end=" ")
+                print(Style.RESET_ALL, end="")
+            elif j == 2:
+                print(Fore.RED + "█", end=" ")
+                print(Style.RESET_ALL, end="")
+            elif j == 3:
+                print("█", end=" ")
+                print(Style.RESET_ALL, end="")
+        print("")
+
+def playGame():
+    print("Board:")
+
+    board = INITIAL_STATE.copy()
+    printBoard(board)
+
 def invalidCoordinate(coord, gameState, agent):
     i = coord[0], j = coord[1]
     return i < 0 or i > 3 or j < 0 or j > 3 or (gameState[i][j] != BLANK and gameState[i][j] != agent)
 
 def evaluateAction(gameState, nextGameState):
-    getSuccessors
+    #getSuccessors
+    return 0
 
 def getAction(gameState):
     def minimax():
@@ -42,7 +68,8 @@ def getAction(gameState):
 def getLegalDotPos(gameState):
     # getting valid actions for dot piece
     validDotPositions = []
-    dot1 = (-1, -1), dot2 = (-1, -2)
+    dot1 = (-1, -1)
+    dot2 = (-1, -2)
 
     # find dot1 and save, find dot2 and save
     foundDot1 = False
@@ -109,11 +136,7 @@ def getSuccessors(gameState, agent):
         successorStates.add(nextGameState) # no dot change
 
         validDotPositions = getLegalDotPos(nextGameState)
-        
-
-
     return successorStates
-
 
 def isValidMoveFormat(move):
     # Define the format using a regular expression
@@ -135,7 +158,9 @@ def isValidMoveFormat(move):
 def isValidMove(gameState, agent, move):
     if(isValidMoveFormat(move)):
         #if dot moved, len(move) == 13, otherwise len(move) = 5
-        xMove = int(move[0]) - 1, yMove = int(move[2]) - 1, orientation = move[4]
+        xMove = int(move[0]) - 1
+        yMove = int(move[2]) - 1
+        orientation = move[4]
         lCoords = [(xMove, yMove)]
         if(orientation == 'E'):
             lCoords.add([(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)])
@@ -173,4 +198,4 @@ def isValidMove(gameState, agent, move):
     return True
 
 
-#adsjoajdiojasdjoaisdjf
+playGame()
