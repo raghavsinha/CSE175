@@ -123,12 +123,12 @@ def evaluateAction(nextGameState, agent):
 
     # Central position control
     central_positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
-    central_control = sum([1 for (x, y) in central_positions if nextGameState[x][y] == agent])
+    central_control = sum([0.5 for (x, y) in central_positions if nextGameState[x][y] == agent])
 
     # Super penalty or reward based on closeness to win/loss
-    if movesForOppAgent <= 2:
+    if movesForOppAgent <= 1:
         return float('inf')  # Winning move
-    elif movesForCurrAgent <= 2:
+    elif movesForCurrAgent <= 1:
         return float('-inf')  # Losing move
 
     # Final evaluation score
