@@ -65,7 +65,7 @@ def applyMove(board, move, agent):
         board[dotInit[0]][dotInit[1]] = 0
         board[dotFinal[0]][dotFinal[1]] = 3
 
-def playGame():
+def playGamePVP():
     board = INITIAL_STATE.copy()
     move = ""
     agent = 1
@@ -74,13 +74,26 @@ def playGame():
         printBoard(board)
         print("")
 
-        move = input("Enter move: ")
-        if(move == "quit"): break
+        if(agent == 1):
+            move = input("Enter blue player move: ")
+            if(move == "quit"): break
+        else:
+            move = input("Enter red player move: ")
+            if(move == "quit"): break
+        
 
         if(isValidMove(board, agent, move)):
             applyMove(board, move, agent)
             if(agent == 1): agent = 2
             else: agent = 1
+
+            possibleMoves = getSuccessors(board, agent)
+            if(len(possibleMoves) == 0):
+                if(agent == 1):
+                    print("Red Player wins!")
+                else:
+                    print("Blue Player wins!")
+                break
         else:
             print("Invalid move. Try again.")
 
@@ -112,39 +125,34 @@ def getAction(gameState):
             bestAction = action
     return bestAction
 
-def getLegalDotPos(gameState):
-    # getting valid actions for dot piece
+# gets valid new dot positions given game state and current dot positions
+def getLegalDotPos(nextGameState, dot1, dot2):
+    # getting valid moves for dot piece
     validDotPositions = []
-    dot1 = (-1, -1)
-    dot2 = (-1, -2)
 
-    # find dot1 and save, find dot2 and save
-    foundDot1 = False
-    for i in gameState:
-       for j in gameState[i]:
-           if(gameState[i][j] == DOT and (not foundDot1)):
-               dot1 = (i, j)
-               foundDot1 = True
-           elif(gameState[i][j] == DOT and (not foundDot1)):
-               dot2 = (i, j)
-
-    # finding valid dot 1 pos
-    for i in gameState:
-       for j in gameState[i]:
-           if(gameState[i][j] == BLANK or (i, j) == dot1):
+    # finding valid dot 1 pos not moving dot 2
+    for i in range(0, 4):
+       for j in range(0, 4):
+           if(nextGameState[i][j] == BLANK): # only a valid move if blank spot
               validDotPositions.append(((i, j), dot2))
 
-    # finding valid dot 2 pos
-    for i in gameState:
-       for j in gameState[i]:
-           if(gameState[i][j] == BLANK or (i, j) == dot2):
+    # finding valid dot 2 pos not moving dot 1
+    for i in range(0, 4):
+       for j in range(0, 4):
+           if(nextGameState[i][j] == BLANK): # only a valid move if blank spot
               validDotPositions.append(dot1, (i, j))
 
     return validDotPositions
 
+# gets valid successor states for given agent and current game states
+# Logic:
+#     - calculates all valid L moves
+#     - adds each L move without dot moves to successor list
+#     - calculates new valid dot positions for each valid L move
+#     - adds successor state with each new valid dot position 
 def getSuccessors(gameState, agent):
     # getting valid actions for l piece
-    validLPositions = [] # get all valid starting positions
+    validLPositions = [] # get all valid starting coords
     for i in gameState:
         for j in gameState[i]:
             if(not invalidCoordinate((i,j), gameState, agent)):
@@ -167,22 +175,55 @@ def getSuccessors(gameState, agent):
                 if(invalidCoordinate(c, gameState, agent)):
                     valid = False
                     break
-            if(valid):
-                validOrientations.append(orientation)
+            if(valid): validOrientations.append(orientation)
 
     if(len(validOrientations) == 0):
         return []
 
     successorStates = []
+    # find all valid nuetral piece moves for each next orientation and create next game state
     for o in validOrientations:
-        nextGameState = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
-        nextGameState[o[0][0]][o[0][1]] = agent
-        nextGameState[o[1][0]][o[1][1]] = agent
-        nextGameState[o[2][0]][o[2][1]] = agent
-        nextGameState[o[3][0]][o[3][1]] = agent
-        successorStates.append(nextGameState) # no dot change
+        nextGameStateOldDots = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        dot1Init = None
+        dot2Init = None
+        for i in range(0, 4):
+            for j in range(0, 4):
+                # getting values for the starting points of each neutral piece
+                if(dot1Init == None or dot2Init == None):
+                    # if (i,j) is a dot...
+                    if(gameState[i][j] == DOT):
+                        # and we haven't found dot 1, then this is dot 1
+                        if(dot1Init == None):
+                            dot1Init = (i, j)
+                        # and we have found dot 1, then this is dot 2
+                        else:
+                            dot2Init = (i, j)
+                
+                # moving everything from current to nextGameState except current agent
+                if(gameState[i][j] != agent):
+                    nextGameStateOldDots[i][j] = gameState[i][j]
 
-        validDotPositions = getLegalDotPos(nextGameState)
+        # place current orientation in nextGameState
+        nextGameStateOldDots[o[0][0]][o[0][1]] = agent
+        nextGameStateOldDots[o[1][0]][o[1][1]] = agent
+        nextGameStateOldDots[o[2][0]][o[2][1]] = agent
+        nextGameStateOldDots[o[3][0]][o[3][1]] = agent
+        # add no dot change scenario to successorStates list
+        successorStates.append(nextGameStateOldDots)
+
+        # get valid dot positions for nextGameState
+        validDotPositions = getLegalDotPos(nextGameStateOldDots, dot1Init, dot2Init)
+        # reset neutral piece positions
+        nextGameStateOldDots[dot1Init[0]][dot1Init[1]] = BLANK
+        nextGameStateOldDots[dot2Init[0]][dot2Init[1]] = BLANK
+
+        # place both dots in every valid position + add to successorStates list
+        for d in validDotPositions:
+            nextGameStateNewDots = nextGameStateOldDots.copy()
+            nextGameStateNewDots[d[0][0]][d[0][1]] = DOT
+            nextGameStateNewDots[d[1][0]][d[1][1]] = DOT
+            successorStates.append(nextGameStateNewDots)
+
     return successorStates
 
 def isValidMoveFormat(move):
@@ -244,4 +285,4 @@ def isValidMove(gameState, agent, move):
     
     return True
 
-playGame()
+playGamePVP()
