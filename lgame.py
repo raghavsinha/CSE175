@@ -108,25 +108,45 @@ def evaluateAction(nextGameState, agent):
     movesForCurrAgent = getSuccessors(nextGameState, agent)
     return movesForCurrAgent - movesForOppAgent
 
-def getAction(gameState):
-    def minimax():
-        return 0
-    def maxValue():
-        return 0
-    def minValue():
-        return 0
+def getBestSuccessor(gameState, agent):
+    def minimax(board, depth, alpha, beta, agent, isMaxAgent):
+        #getSuccessors, heuristic, and evaluation
+        if depth == maxDepth or getSuccessors(board, agent) == []:
+            return evaluateAction(board, agent)
+        elif isMaxAgent:
+            maxValue(board, depth, alpha, beta, agent)
+        else:
+            minValue(board, depth + 1, alpha, beta, agent)
+     
+    def maxValue(board, depth, alpha, beta, agent):
+        maxEval = float('-inf')
+        for successor in getSuccessors(gameState, agent):
+            eval = minimax(successor, depth +1, alpha, beta, False)
+            maxEval = max(maxEval, eval)
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                break
+        return maxEval
+    def minValue(board, depth, alpha, beta, agent):
+        minEval = float('inf')
+        for successor in getSuccessors(gameState, agent):
+            eval = minimax(successor, depth +1, alpha, beta, True)
+            minEval = min(minEval, eval)
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break
+        return minEval
     
-    
+    maxDepth = 5
     bestScore = float('-inf') # min init val
-    bestAction = None
-    # legalActions = getLegalActions(gameState)
-    # for action in legalActions:
-    #     successor = gameState.generateSuccessor(0, action) 
-    #     score = minimax(1, 0, successor)  
-    #     if score > bestScore: 
-    #         bestScore = score
-    #         bestAction = action
-    # return bestAction
+    bestSuccessor = None
+    successors = getSuccessors(gameState, agent)
+    for successor in successors:
+        score = minimax(successor, 1, float('-inf'), float('inf'), agent, True)  
+        if score > bestScore: 
+            bestScore = score
+            bestSuccessor = successor
+    return bestSuccessor
 
 # gets valid new dot positions given game state and current dot positions
 def getLegalDotPos(nextGameState, dot1, dot2):
