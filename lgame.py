@@ -414,4 +414,4 @@ def isValidMove(gameState, agent, move):
     
     return True
 
-playGamePVP()
+menu()
