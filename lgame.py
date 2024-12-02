@@ -14,6 +14,23 @@ RED = 2
 DOT = 3
 INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 
+def menu():
+    print("Welcome to L Game! Choose your game mode: ")
+    print("1. PVP")
+    print("2. PVC")
+    print("3. CVC")
+    choice = input()
+    if choice.upper() == "PVP":
+        playGamePVP()
+    #elif choice.upper() == "PVC":
+        #playGamePVC
+    #elif choice.upper() == "CVC":
+        #playGameCVC
+    #else:
+        #print("Please enter a valid game mode: ")
+        #choice = input()
+    return 0
+
 def printBoard(board):
     print(Style.RESET_ALL, end="")
     for i in board:
