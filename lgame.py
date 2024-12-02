@@ -78,7 +78,7 @@ def playGamePVP():
             move = input("Enter blue player move: ")
             if(move == "quit"): break
         else:
-            move = input("Enter red player move: ")
+            move = input("Enter red player move: ")  
             if(move == "quit"): break
         
 
@@ -101,9 +101,12 @@ def invalidCoordinate(coord, gameState, agent):
     i = coord[0], j = coord[1]
     return i < 0 or i > 3 or j < 0 or j > 3 or (gameState[i][j] != BLANK and gameState[i][j] != agent)
 
-def evaluateAction(gameState, nextGameState):
-    #getSuccessors
-    return 0
+def evaluateAction(nextGameState, agent):
+    # favor more moves for current agent after move, defavor more moves for opp agent after move
+    nextAgent = 2 if agent == 1 else 1
+    movesForOppAgent = getSuccessors(nextGameState, nextAgent)
+    movesForCurrAgent = getSuccessors(nextGameState, agent)
+    return movesForCurrAgent - movesForOppAgent
 
 def getAction(gameState):
     def minimax():
