@@ -1,5 +1,6 @@
 import re
 import colorama
+import time
 from colorama import Fore, Back, Style
 
 # Key:
@@ -19,17 +20,78 @@ def menu():
     print("1. PVP")
     print("2. PVC")
     print("3. CVC")
-    choice = input()
-    if choice.upper() == "PVP":
-        playGamePVP()
-    #elif choice.upper() == "PVC":
-        #playGamePVC
-    #elif choice.upper() == "CVC":
-        #playGameCVC
-    #else:
-        #print("Please enter a valid game mode: ")
-        #choice = input()
-    return 0
+    print("4. QUIT")
+    choice = ""
+
+    while(choice.upper() != "QUIT"):
+        choice = input()
+        if choice.upper() == "PVP":
+            playGamePVP()
+        elif choice.upper() == "PVC":
+            playGamePVC()
+        elif choice.upper() == "CVC":
+            playGameCVC()
+        elif choice.upper() == "QUIT":
+            break
+        else:
+            print("Please enter a valid game mode: ")
+
+def playGamePVC():
+    print("You are Blue! CPU is Red!")
+    board = INITIAL_STATE.copy()
+    move = ""
+    agent = 1
+    while(move != "quit"):
+        print("Board:")
+        printBoard(board)
+        print("")
+
+        if(agent == 1):
+            move = input("Enter move: ")
+            if(move == "quit"): break
+
+            if(isValidMove(board, agent, move)):
+                applyMove(board, move, agent)
+                agent = 2 if agent == 1 else 1 # flip agent
+                possibleMoves = getSuccessors(board, agent)
+                if(len(possibleMoves) == 0):
+                    if(agent == 2):
+                        print("CPU wins!")
+                    else:
+                        print("Player wins!")
+                    break
+            else:
+                print("Invalid move. Try again.")
+        else:
+            board = getBestSuccessor(board, agent)
+            possibleMoves = getSuccessors(board, agent)
+            agent = 2 if agent == 1 else 1 # flip agent
+            if(len(possibleMoves) == 0):
+                if(agent == 2):
+                    print("CPU wins!")
+                else:
+                    print("Player wins!")
+                break
+
+def playGameCVC():
+    print("CPU 1 is Blue! CPU 2 is Red!")
+    board = INITIAL_STATE.copy()
+    agent = 1
+    while(True):
+        time.sleep(1) # pause for a sec
+        print("Board:")
+        printBoard(board)
+        print("")
+            
+        board = getBestSuccessor(board, agent)
+        agent = 2 if agent == 1 else 1 # flip agent
+        possibleMoves = getSuccessors(board, agent)
+        if(len(possibleMoves) == 0):
+            if(agent == 2):
+                print("CPU 2 wins!")
+            else:
+                print("CPU 1 wins!")
+            break
 
 def printBoard(board):
     print(Style.RESET_ALL, end="")
@@ -101,9 +163,7 @@ def playGamePVP():
 
         if(isValidMove(board, agent, move)):
             applyMove(board, move, agent)
-            if(agent == 1): agent = 2
-            else: agent = 1
-
+            agent = 2 if agent == 1 else 1 # flip agent
             possibleMoves = getSuccessors(board, agent)
             if(len(possibleMoves) == 0):
                 if(agent == 1):
@@ -151,42 +211,44 @@ def evaluateAction(nextGameState, agent):
     # Final evaluation score
     return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl
 
-
 def getBestSuccessor(gameState, agent):
     def minimax(board, depth, alpha, beta, agent, isMaxAgent):
         #getSuccessors, heuristic, and evaluation
-        if depth == maxDepth or getSuccessors(board, agent) == []:
-            return evaluateAction(board, agent)
+        if depth == maxDepth or getSuccessors(board, minimaxAgent) == []:
+            return evaluateAction(board, minimaxAgent)
         elif isMaxAgent:
-            maxValue(board, depth, alpha, beta, agent)
+            maxValue(board, depth, alpha, beta, minimaxAgent)
         else:
-            minValue(board, depth + 1, alpha, beta, agent)
+            minValue(board, depth + 1, alpha, beta, minimaxAgent)
      
-    def maxValue(board, depth, alpha, beta, agent):
+    def maxValue(board, depth, alpha, beta, minimaxAgent):
         maxEval = float('-inf')
-        for successor in getSuccessors(gameState, agent):
-            eval = minimax(successor, depth +1, alpha, beta, False)
+        for successor in getSuccessors(gameState, minimaxAgent):
+            eval = minimax(successor, depth + 1, alpha, beta, False)
             maxEval = max(maxEval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
+        minimaxAgent = 2 if minimaxAgent == 1 else 1 # flip agent
         return maxEval
-    def minValue(board, depth, alpha, beta, agent):
+    def minValue(board, depth, alpha, beta, minimaxAgent):
         minEval = float('inf')
-        for successor in getSuccessors(gameState, agent):
-            eval = minimax(successor, depth +1, alpha, beta, True)
+        for successor in getSuccessors(gameState, minimaxAgent):
+            eval = minimax(successor, depth + 1, alpha, beta, True)
             minEval = min(minEval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
+        minimaxAgent = 2 if minimaxAgent == 1 else 1 # flip agent
         return minEval
     
     maxDepth = 5
     bestScore = float('-inf') # min init val
     bestSuccessor = None
     successors = getSuccessors(gameState, agent)
+    minimaxAgent = agent
     for successor in successors:
-        score = minimax(successor, 1, float('-inf'), float('inf'), agent, True)  
+        score = minimax(successor, 1, float('-inf'), float('inf'), minimaxAgent, True)  
         if score > bestScore: 
             bestScore = score
             bestSuccessor = successor
