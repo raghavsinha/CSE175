@@ -69,7 +69,7 @@ def playGamePVP():
     board = INITIAL_STATE.copy()
     move = ""
     agent = 1
-    while(move != "quit"):
+    while(move != " quit"):
         print("Board:")
         printBoard(board)
         print("")
@@ -116,14 +116,14 @@ def getAction(gameState):
     
     bestScore = float('-inf') # min init val
     bestAction = None
-    legalActions = getLegalActions(gameState)
-    for action in legalActions:
-        successor = gameState.generateSuccessor(0, action) 
-        score = minimax(1, 0, successor)  
-        if score > bestScore: 
-            bestScore = score
-            bestAction = action
-    return bestAction
+    # legalActions = getLegalActions(gameState)
+    # for action in legalActions:
+    #     successor = gameState.generateSuccessor(0, action) 
+    #     score = minimax(1, 0, successor)  
+    #     if score > bestScore: 
+    #         bestScore = score
+    #         bestAction = action
+    # return bestAction
 
 # gets valid new dot positions given game state and current dot positions
 def getLegalDotPos(nextGameState, dot1, dot2):
