@@ -118,12 +118,12 @@ def evaluateAction(nextGameState, agent):
     movesForOppAgent = len(getSuccessors(nextGameState, nextAgent))
 
     # Heuristic components
-    weight_curr = 1
-    weight_opp = 2
+    weightCurr = 1
+    weightOpp = 2
 
     # Central position control
-    central_positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
-    central_control = sum([0.5 for (x, y) in central_positions if nextGameState[x][y] == agent])
+    centralPos = [(1, 1), (1, 2), (2, 1), (2, 2)]
+    centralControl = sum([0.5 for (x, y) in centralPos if nextGameState[x][y] == agent])
 
     # Super penalty or reward based on closeness to win/loss
     if movesForOppAgent <= 1:
@@ -132,7 +132,7 @@ def evaluateAction(nextGameState, agent):
         return float('-inf')  # Losing move
 
     # Final evaluation score
-    return (weight_curr * movesForCurrAgent) - (weight_opp * movesForOppAgent) + central_control
+    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl
 
 
 def getBestSuccessor(gameState, agent):
