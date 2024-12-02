@@ -104,8 +104,8 @@ def invalidCoordinate(coord, gameState, agent):
 def evaluateAction(nextGameState, agent):
     # favor more moves for current agent after move, defavor more moves for opp agent after move
     nextAgent = 2 if agent == 1 else 1
-    movesForOppAgent = getSuccessors(nextGameState, nextAgent)
-    movesForCurrAgent = getSuccessors(nextGameState, agent)
+    movesForOppAgent = len(getSuccessors(nextGameState, nextAgent))
+    movesForCurrAgent = len(getSuccessors(nextGameState, agent))
     return movesForCurrAgent - movesForOppAgent
 
 def getBestSuccessor(gameState, agent):
