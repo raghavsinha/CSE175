@@ -101,12 +101,39 @@ def invalidCoordinate(coord, gameState, agent):
     i = coord[0], j = coord[1]
     return i < 0 or i > 3 or j < 0 or j > 3 or (gameState[i][j] != BLANK and gameState[i][j] != agent)
 
+def dotProximityToOpponent(dotPositions, opponentLCoords):
+    score = 0
+    for dot in dotPositions:
+        for lCoord in opponentLCoords:
+            distance = abs(dot[0] - lCoord[0]) + abs(dot[1] - lCoord[1])
+            score -= distance  # The closer, the more restrictive
+    return score
+
 def evaluateAction(nextGameState, agent):
-    # favor more moves for current agent after move, defavor more moves for opp agent after move
+    # Define opponent agent
     nextAgent = 2 if agent == 1 else 1
-    movesForOppAgent = len(getSuccessors(nextGameState, nextAgent))
+
+    # Calculate the number of possible moves for both agents
     movesForCurrAgent = len(getSuccessors(nextGameState, agent))
-    return movesForCurrAgent - movesForOppAgent
+    movesForOppAgent = len(getSuccessors(nextGameState, nextAgent))
+
+    # Heuristic components
+    weight_curr = 1
+    weight_opp = 2
+
+    # Central position control
+    central_positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
+    central_control = sum([1 for (x, y) in central_positions if nextGameState[x][y] == agent])
+
+    # Super penalty or reward based on closeness to win/loss
+    if movesForOppAgent <= 2:
+        return float('inf')  # Winning move
+    elif movesForCurrAgent <= 2:
+        return float('-inf')  # Losing move
+
+    # Final evaluation score
+    return (weight_curr * movesForCurrAgent) - (weight_opp * movesForOppAgent) + central_control
+
 
 def getBestSuccessor(gameState, agent):
     def minimax(board, depth, alpha, beta, agent, isMaxAgent):
