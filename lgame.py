@@ -1,6 +1,7 @@
 import re
 import colorama
 import time
+import copy
 from colorama import Fore, Back, Style
 
 # Key:
@@ -38,7 +39,7 @@ def menu():
 
 def playGamePVC():
     print("You are Blue! CPU is Red!")
-    board = INITIAL_STATE.copy()
+    board = copy.deepcopy(INITIAL_STATE)
     move = ""
     agent = 1
     while(move != "quit"):
@@ -74,23 +75,31 @@ def playGamePVC():
                 break
 
 def playGameCVC():
-    print("CPU 1 is Blue! CPU 2 is Red!")
-    board = INITIAL_STATE.copy()
+    print("CPU 1 is Blue! CPU 2 is Red!\n")
+    board = copy.deepcopy(INITIAL_STATE)
     agent = 1
+    print("Board:")
+    printBoard(board)
+    print("")
     while(True):
-        time.sleep(1) # pause for a sec
-        print("Board:")
-        printBoard(board)
-        print("")
-            
         board = getBestSuccessor(board, agent)
         agent = 2 if agent == 1 else 1 # flip agent
         possibleMoves = getSuccessors(board, agent)
+
+        if(agent == 1):
+            print("CPU 1 (Blue) Played:")
+            printBoard(board)
+            print("")
+        else:
+            print("CPU 2 (Red) Played:")
+            printBoard(board)
+            print("")
+
         if(len(possibleMoves) == 0):
             if(agent == 2):
-                print("CPU 2 wins!")
+                print("CPU 2 (Red) wins!")
             else:
-                print("CPU 1 wins!")
+                print("CPU 1 (Blue) wins!")
             break
 
 def printBoard(board):
@@ -113,7 +122,6 @@ def printBoard(board):
 
 def applyMove(board, move, agent):
     #resetting current agent position in board
-    neutral = (-1, -1)
     for i in range(0, 4):
         for j in range(0, 4):
             if(board[i][j] == agent):
@@ -136,16 +144,15 @@ def applyMove(board, move, agent):
 
     for coord in lCoords:
         board[coord[0]][coord[1]] = agent
-    
+
     if(len(move) > 5):
-        board[neutral[0]][neutral[1]] = 0
         dotInit = (int(move[6]) - 1, int(move[8]) - 1)
         dotFinal = (int(move[10]) - 1, int(move[12]) - 1)
         board[dotInit[0]][dotInit[1]] = 0
         board[dotFinal[0]][dotFinal[1]] = 3
 
 def playGamePVP():
-    board = INITIAL_STATE.copy()
+    board = copy.deepcopy(INITIAL_STATE)
     move = ""
     agent = 1
     while(move != " quit"):
@@ -174,10 +181,6 @@ def playGamePVP():
         else:
             print("Invalid move. Try again.")
 
-def invalidCoordinate(coord, gameState, agent):
-    i = coord[0], j = coord[1]
-    return i < 0 or i > 3 or j < 0 or j > 3 or (gameState[i][j] != BLANK and gameState[i][j] != agent)
-
 def dotProximityToOpponent(dotPositions, opponentLCoords):
     score = 0
     for dot in dotPositions:
@@ -194,9 +197,12 @@ def evaluateAction(nextGameState, agent):
     movesForCurrAgent = len(getSuccessors(nextGameState, agent))
     movesForOppAgent = len(getSuccessors(nextGameState, nextAgent))
 
+    if(movesForCurrAgent == None or movesForOppAgent == None):
+        print(movesForCurrAgent, movesForOppAgent)
+
     # Heuristic components
     weightCurr = 1
-    weightOpp = 2
+    weightOpp = 1
 
     # Central position control
     centralPos = [(1, 1), (1, 2), (2, 1), (2, 2)]
@@ -214,17 +220,26 @@ def evaluateAction(nextGameState, agent):
 def getBestSuccessor(gameState, agent):
     def minimax(board, depth, alpha, beta, agent, isMaxAgent):
         #getSuccessors, heuristic, and evaluation
-        if depth == maxDepth or getSuccessors(board, minimaxAgent) == []:
-            return evaluateAction(board, minimaxAgent)
+        #print("MINIMAX BOARD:")
+        #printBoard(board)
+        successors = getSuccessors(board, minimaxAgent)
+        if depth == maxDepth or len(successors) == 0:
+            eval = evaluateAction(board, minimaxAgent)
+            return eval
         elif isMaxAgent:
-            maxValue(board, depth, alpha, beta, minimaxAgent)
+            #print("max")
+            return maxValue(board, depth, alpha, beta, minimaxAgent)
         else:
-            minValue(board, depth + 1, alpha, beta, minimaxAgent)
+            #print("min")
+            return minValue(board, depth + 1, alpha, beta, minimaxAgent)
      
     def maxValue(board, depth, alpha, beta, minimaxAgent):
+        #print("max, currDepth:", depth)
         maxEval = float('-inf')
-        for successor in getSuccessors(gameState, minimaxAgent):
-            eval = minimax(successor, depth + 1, alpha, beta, False)
+        successors = getSuccessors(gameState, minimaxAgent)
+        for successor in successors:
+            eval = minimax(successor, depth + 1, alpha, beta, minimaxAgent, False)
+            #print("Eval:", eval, "\n")
             maxEval = max(maxEval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -232,9 +247,12 @@ def getBestSuccessor(gameState, agent):
         minimaxAgent = 2 if minimaxAgent == 1 else 1 # flip agent
         return maxEval
     def minValue(board, depth, alpha, beta, minimaxAgent):
+        #print("min, currDepth:", depth)
         minEval = float('inf')
-        for successor in getSuccessors(gameState, minimaxAgent):
-            eval = minimax(successor, depth + 1, alpha, beta, True)
+        successors = getSuccessors(gameState, minimaxAgent)
+        for successor in successors:
+            eval = minimax(successor, depth + 1, alpha, beta, minimaxAgent, True)
+            #print("Eval:", eval, "\n")
             minEval = min(minEval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
@@ -242,17 +260,26 @@ def getBestSuccessor(gameState, agent):
         minimaxAgent = 2 if minimaxAgent == 1 else 1 # flip agent
         return minEval
     
-    maxDepth = 5
+    maxDepth = 2
     bestScore = float('-inf') # min init val
     bestSuccessor = None
     successors = getSuccessors(gameState, agent)
     minimaxAgent = agent
     for successor in successors:
-        score = minimax(successor, 1, float('-inf'), float('inf'), minimaxAgent, True)  
+        score = minimax(successor, 1, float('-inf'), float('inf'), minimaxAgent, True) 
+        #print("IT STOPPEDDD!") 
         if score > bestScore: 
             bestScore = score
             bestSuccessor = successor
+    
+    print(bestSuccessor)
     return bestSuccessor
+
+def invalidCoordinate(coord, gameState, agent):
+    #print(f"Debug: coord={coord}, type={type(coord)}")  # Debugging line
+    i = coord[0]
+    j = coord[1]
+    return i < 0 or i > 3 or j < 0 or j > 3 or (gameState[i][j] != BLANK and gameState[i][j] != agent)
 
 # gets valid new dot positions given game state and current dot positions
 def getLegalDotPos(nextGameState, dot1, dot2):
@@ -269,7 +296,7 @@ def getLegalDotPos(nextGameState, dot1, dot2):
     for i in range(0, 4):
        for j in range(0, 4):
            if(nextGameState[i][j] == BLANK): # only a valid move if blank spot
-              validDotPositions.append(dot1, (i, j))
+              validDotPositions.append((dot1, (i, j)))
 
     return validDotPositions
 
@@ -280,16 +307,22 @@ def getLegalDotPos(nextGameState, dot1, dot2):
 #     - calculates new valid dot positions for each valid L move
 #     - adds successor state with each new valid dot position 
 def getSuccessors(gameState, agent):
+    #print("CURR:")
+    #printBoard(gameState)
+    #print("SUCCS:")
+    #print("SUCCESSORS:")
     # getting valid actions for l piece
     validLPositions = [] # get all valid starting coords
-    for i in gameState:
-        for j in gameState[i]:
-            if(not invalidCoordinate((i,j), gameState, agent)):
+    for i in range(0, 4):
+        for j in range(0, 4):
+            coord = (i, j)
+            if(not invalidCoordinate(coord, gameState, agent)):
                 validLPositions.append((i, j))
     
     validOrientations = []
     for coord in validLPositions:
-        i = coord[0], j = coord[1]
+        i = coord[0]
+        j = coord[1]
         allPossibleLs = [[(i, j), (i - 1, j), (i - 1, j + 1), (i - 1, j + 2)], [(i, j), (i - 1, j), (i - 1, j - 1), (i - 1, j - 2)],
                         [(i, j), (i + 1, j), (i + 1, j + 1), (i + 1, j + 2)], [(i, j), (i + 1, j), (i + 1, j - 1), (i + 1, j - 2)],
                         [(i, j), (i, j - 1), (i - 1, j - 1), (i - 2, j - 1)], [(i, j), (i, j - 1), (i + 1, j - 1), (i + 2, j - 1)],
@@ -305,6 +338,10 @@ def getSuccessors(gameState, agent):
                     valid = False
                     break
             if(valid): validOrientations.append(orientation)
+    
+    validOrientations = [sorted(vO) for vO in validOrientations]
+    validOrientations = [list(t) for t in {tuple(vO) for vO in validOrientations}]
+    del validOrientations[0]
 
     if(len(validOrientations) == 0):
         return []
@@ -338,7 +375,10 @@ def getSuccessors(gameState, agent):
         nextGameStateOldDots[o[2][0]][o[2][1]] = agent
         nextGameStateOldDots[o[3][0]][o[3][1]] = agent
         # add no dot change scenario to successorStates list
-        successorStates.append(nextGameStateOldDots)
+        #printBoard(nextGameStateOldDots)
+        #print(nextGameStateOldDots)
+        #print("")
+        successorStates.append(copy.deepcopy(nextGameStateOldDots))
 
         # get valid dot positions for nextGameState
         validDotPositions = getLegalDotPos(nextGameStateOldDots, dot1Init, dot2Init)
@@ -348,29 +388,48 @@ def getSuccessors(gameState, agent):
 
         # place both dots in every valid position + add to successorStates list
         for d in validDotPositions:
-            nextGameStateNewDots = nextGameStateOldDots.copy()
+            nextGameStateNewDots = copy.deepcopy(nextGameStateOldDots)
             nextGameStateNewDots[d[0][0]][d[0][1]] = DOT
             nextGameStateNewDots[d[1][0]][d[1][1]] = DOT
+            #printBoard(nextGameStateNewDots)
+            #print("")
             successorStates.append(nextGameStateNewDots)
-
+    
+    #print("Successors:", successorStates)
     return successorStates
 
 def isValidMoveFormat(move):
     # Define the format using a regular expression
-    pattern = r"^\d \d [A-Za-z] \d \d \d \d$"
-    if not re.match(pattern, move):
-        return False
-    
-    nums = [0, 2, 6, 8, 10, 12]
-    for n in nums:
-        if(int(move[n]) not in range(1, 5)):
+    if(len(move) == 13):
+        pattern = r"^\d \d [A-Za-z] \d \d \d \d$"
+        if not re.match(pattern, move):
             return False
+        
+        nums = [0, 2, 6, 8, 10, 12]
+        for n in nums:
+            if(int(move[n]) not in range(1, 5)):
+                return False
 
-    validOrientations = ['E', 'S', 'W', 'N']
-    if(move[4] not in validOrientations):
+        validOrientations = ['E', 'S', 'W', 'N']
+        if(move[4] not in validOrientations):
+            return False
+        return True
+    elif(len(move) == 5):
+        pattern = r"^\d \d [A-Za-z]$"
+        if not re.match(pattern, move):
+            return False
+        
+        nums = [0, 2]
+        for n in nums:
+            if(int(move[n]) not in range(1, 5)):
+                return False
+
+        validOrientations = ['E', 'S', 'W', 'N']
+        if(move[4] not in validOrientations):
+            return False
+        return True
+    else:
         return False
-
-    return True
 
 def isValidMove(gameState, agent, move):
     if(isValidMoveFormat(move)):
@@ -388,17 +447,9 @@ def isValidMove(gameState, agent, move):
         elif(orientation == 'N'):
             lCoords.extend([(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)])
 
-        legalLCoords = True
         for c in lCoords:
-            if(c[0] < 0 or c[0] > 3 or c[1] < 0 or c[1] > 3):
-                legalLCoords = False
-                break
-            if((gameState[c[0]][c[1]] != agent and gameState[c[0]][c[1]] != BLANK)):
-                legalLCoords = False
-                break
-
-        if(not legalLCoords):
-            return False
+            if(invalidCoordinate((c[0], c[1]), gameState, agent)):
+                return False
 
         if(len(move) > 5):
             dotInit = (int(move[6]) - 1, int(move[8]) - 1)
@@ -409,9 +460,18 @@ def isValidMove(gameState, agent, move):
                 return False
             if(gameState[dotFinal[0]][dotFinal[1]] == DOT):
                 return False
+            for c in lCoords:
+                if(c[0] == dotFinal[0] and c[1] == dotFinal[1]):
+                    return False
     else:
         return False
-    
     return True
 
 menu()
+
+#board = copy.deepcopy(INITIAL_STATE)
+#printBoard(board)
+#print(len(getSuccessors(board, 1)))
+
+# print sample board:
+# print(---)
