@@ -357,6 +357,40 @@ def isRepeatedState(gameState):
             return True
 
 def evaluateAction(nextGameState, agent):
+    #print("Evaluating:")
+    #printBoard(nextGameState)
+    # Define opponent agent
+    nextAgent = 2 if agent == 1 else 1
+
+    # Calculate the number of possible moves for both agents
+    movesForCurrAgent = len(getSuccessors(nextGameState, agent))
+    movesForOppAgent = len(getSuccessors(nextGameState, nextAgent))
+
+    if(movesForCurrAgent == None or movesForOppAgent == None):
+        print(movesForCurrAgent, movesForOppAgent)
+
+    # Heuristic components
+    weightCurr = 1
+    weightOpp = 1
+
+    # Central position control
+    centralPos = [(1, 1), (1, 2), (2, 1), (2, 2)]
+    centralControl = sum([0.5 for (x, y) in centralPos if nextGameState[x][y] == agent])
+
+    superComp = 0
+    # Super penalty or reward based on closeness to win/loss
+    if movesForOppAgent <= 1:
+        superComp = 150
+        #return float('inf')  # Winning move
+    elif movesForCurrAgent <= 1:
+        superComp = -150
+        #return float('-inf')  # Losing move
+
+    # Final evaluation score
+    #print("Eval Score:", ((weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl))
+    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp
+
+def evaluateAction1(nextGameState, agent):
     # Define opponent agent
     nextAgent = 2 if agent == 1 else 1
 
@@ -377,7 +411,7 @@ def evaluateAction(nextGameState, agent):
     pegPositions = [(x, y) for x in range(len(nextGameState)) for y in range(len(nextGameState[0])) if nextGameState[x][y] == 'P']
     for (x, y) in pegPositions:
         # Calculate Manhattan distance to agent's L-piece
-        distances = [abs(x - lx) + abs(y - ly) for lx, ly in getLPositions(nextGameState, agent)]
+        distances = [abs(x - lx) + abs(y - ly) for lx, ly in getCurrentLCoords(nextGameState, agent)]
         pegProximity += sum(distances)
     pegProximityWeight = -0.5  # Negative weight to encourage keeping distance from pegs
 
