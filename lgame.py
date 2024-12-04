@@ -28,14 +28,57 @@ def menu():
         choice = input()
         if choice.upper() == "PVP":
             playGamePVP()
+            print("\nGoing back to menu...")
+            time.sleep(2)
+            break
         elif choice.upper() == "PVC":
             playGamePVC()
+            print("\nGoing back to menu...\n")
+            time.sleep(2)
+            break
         elif choice.upper() == "CVC":
             playGameCVC()
-        elif choice.upper() == "QUIT":
+            print("\nGoing back to menu...")
+            time.sleep(2)
             break
+        elif choice.upper() == "QUIT":
+            return 0
         else:
             print("Please enter a valid game mode: ")
+    menu()
+
+def playGamePVP():
+    board = copy.deepcopy(INITIAL_STATE)
+    move = ""
+    agent = 1
+    while(move != " quit"):
+        print("Board:")
+        printBoard(board)
+        print("")
+
+        if(agent == 1):
+            move = input("Enter blue player move: ")
+            if(move == "quit"): break
+        else:
+            move = input("Enter red player move: ")  
+            if(move == "quit"): break
+        
+
+        if(isValidMove(board, agent, move)):
+            applyMove(board, move, agent)
+            agent = 2 if agent == 1 else 1 # flip agent
+            possibleMoves = getSuccessors(board, agent)
+            if(len(possibleMoves) == 0):
+                if(agent == 1):
+                    print("Red Player wins!")
+                    return 0
+                else:
+                    print("Blue Player wins!")
+                    return 0
+                break
+        else:
+            print("Invalid move. Try again.")
+    return 0
 
 def playGamePVC():
     print("You are Blue! CPU is Red!")
@@ -58,8 +101,10 @@ def playGamePVC():
                 if(len(possibleMoves) == 0):
                     if(agent == 2):
                         print("CPU wins!")
+                        return 0
                     else:
                         print("Player wins!")
+                        return 0
                     break
             else:
                 print("Invalid move. Try again.")
@@ -74,6 +119,8 @@ def playGamePVC():
                 else:
                     print("Player wins!")
                 break
+
+    return 0
 
 def playGameCVC():
     print("CPU 1 is Blue! CPU 2 is Red!\n")
@@ -103,9 +150,12 @@ def playGameCVC():
         if(len(possibleMoves) == 0):
             if(agent == 2):
                 print("CPU 2 (Red) wins!")
+                return 0
             else:
                 print("CPU 1 (Blue) wins!")
+                return 0
             break
+    return 0
 
 def printBoard(board):
     print(Style.RESET_ALL, end="")
@@ -158,36 +208,6 @@ def applyMove(board, move, agent):
         board[dotInit[0]][dotInit[1]] = 0
         board[dotFinal[0]][dotFinal[1]] = 3
 
-def playGamePVP():
-    board = copy.deepcopy(INITIAL_STATE)
-    move = ""
-    agent = 1
-    while(move != " quit"):
-        print("Board:")
-        printBoard(board)
-        print("")
-
-        if(agent == 1):
-            move = input("Enter blue player move: ")
-            if(move == "quit"): break
-        else:
-            move = input("Enter red player move: ")  
-            if(move == "quit"): break
-        
-
-        if(isValidMove(board, agent, move)):
-            applyMove(board, move, agent)
-            agent = 2 if agent == 1 else 1 # flip agent
-            possibleMoves = getSuccessors(board, agent)
-            if(len(possibleMoves) == 0):
-                if(agent == 1):
-                    print("Red Player wins!")
-                else:
-                    print("Blue Player wins!")
-                break
-        else:
-            print("Invalid move. Try again.")
-
 def generateBoardFromInit(init):
     board = [[]]
 
@@ -220,17 +240,18 @@ def evaluateAction(nextGameState, agent):
     centralPos = [(1, 1), (1, 2), (2, 1), (2, 2)]
     centralControl = sum([0.5 for (x, y) in centralPos if nextGameState[x][y] == agent])
 
+    superComp = 0
     # Super penalty or reward based on closeness to win/loss
     if movesForOppAgent <= 1:
-        #print("Eval Score:", float('inf'))
-        return float('inf')  # Winning move
+        superComp = 150
+        #return float('inf')  # Winning move
     elif movesForCurrAgent <= 1:
-        #print("Eval Score:", float('-inf'))
-        return float('-inf')  # Losing move
+        superComp = -150
+        #return float('-inf')  # Losing move
 
     # Final evaluation score
     #print("Eval Score:", ((weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl))
-    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl
+    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp
 
 def isStateInStates(state, stateList):
     for s in stateList:
@@ -291,18 +312,19 @@ def getBestSuccessor(gameState, agent):
     bestSuccessor = None
     successors = getSuccessors(gameState, agent)
     #print("Successors:", successors)
-    print("IS CURR STATE IN SUCCESSORS:", isStateInStates(gameState, successors))
+    #print("IS CURR STATE IN SUCCESSORS:", isStateInStates(gameState, successors))
     minimaxAgent = agent
     for successor in successors:
-        score = minimax(successor, 1, float('-inf'), float('inf'), minimaxAgent, True) 
+        score = minimax(successor, 1, float('-inf'), float('inf'), minimaxAgent, True)
         #print("IT STOPPEDDD!") 
         if score > bestScore: 
             bestScore = score
             bestSuccessor = successor
-            print("Best Successor updated:", bestSuccessor)
-    print("NEXT AND PREVIOUS THE SAME?:", compareStates(gameState, bestSuccessor))
-    print("BEST SUCCESSOR FOUND:")
-    printBoard(bestSuccessor)
+            #print("Best Successor updated:", bestSuccessor)
+    #print("NEXT AND PREVIOUS THE SAME?:", compareStates(gameState, bestSuccessor))
+    #print("Best Successor Eval: ", bestScore)
+    #print("BEST SUCCESSOR FOUND:")
+    #printBoard(bestSuccessor)
     return bestSuccessor
 
 def invalidCoordinate(coord, gameState, agent):
@@ -330,6 +352,25 @@ def getLegalDotPos(nextGameState, dot1, dot2):
 
     return validDotPositions
 
+def getCurrentLCoords(gameState, agent):
+    lCoords = []
+    for i in range(0, 4):
+        for j in range(0, 4):
+            if(gameState[i][j] == agent):
+                lCoords.append((i, j))
+    return lCoords
+
+def compareLCoords(lCoords1, lCoords2):
+    for c1 in lCoords1:
+        foundMatch = False
+        for c2 in lCoords2:
+            if(c1[0] == c2[0] and c1[1] == c2[1]):
+                foundMatch = True
+                break
+        if(not foundMatch):
+            return False
+    return True
+
 # gets valid successor states for given agent and current game state
 # Logic:
 #     - calculates all valid L moves
@@ -348,6 +389,8 @@ def getSuccessors(gameState, agent):
             coord = (i, j)
             if(not invalidCoordinate(coord, gameState, agent)):
                 validLPositions.append((i, j))
+
+    currLCoords = getCurrentLCoords(gameState, agent)
     
     validOrientations = []
     for coord in validLPositions:
@@ -367,14 +410,15 @@ def getSuccessors(gameState, agent):
                 if(invalidCoordinate(c, gameState, agent)):
                     valid = False
                     break
-            if(valid): validOrientations.append(orientation)
+            if(valid and not compareLCoords(orientation, currLCoords)):
+                validOrientations.append(orientation)
     
+    if(len(validOrientations) == 0):
+        return []
+
     validOrientations = [sorted(vO) for vO in validOrientations]
     validOrientations = [list(t) for t in {tuple(vO) for vO in validOrientations}]
     del validOrientations[0]
-
-    if(len(validOrientations) == 0):
-        return []
 
     successorStates = []
     # find all valid nuetral piece moves for each next orientation and create next game state
@@ -504,10 +548,3 @@ def isValidMove(gameState, agent, move):
     return True
 
 menu()
-
-#board = copy.deepcopy(INITIAL_STATE)
-#printBoard(board)
-#print(len(getSuccessors(board, 1)))
-
-# print sample board:
-# print(---)
