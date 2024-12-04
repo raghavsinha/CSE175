@@ -14,38 +14,166 @@ BLANK = 0
 BLUE = 1
 RED = 2
 DOT = 3
+EMPTY_STATE = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
 INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
+OG_INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 
 def menu():
-    print("Welcome to L Game! Choose your game mode: ")
-    print("1. PVP")
-    print("2. PVC")
-    print("3. CVC")
-    print("4. QUIT")
+    print(Style.RESET_ALL + "-------------------------------")
+    print(Fore.GREEN + "Welcome to L Game!")
+    print(Fore.RED + "   1. Player v Player")
+    print("   2. Player v CPU")
+    print("   3. CPU v CPU")
+    print("   4. Change initial state")
+    print("   5. Reset initial state")
+    print("   6. Quit")
+    print(Style.RESET_ALL)
     choice = ""
 
-    while(choice.upper() != "QUIT"):
-        choice = input()
-        if choice.upper() == "PVP":
+    while(choice != "6"):
+        choice = input("Enter a number to choose your game mode: ")
+        if choice == "1" or choice.upper() == "PVP":
             playGamePVP()
-            print("\nGoing back to menu...")
-            time.sleep(2)
+            time.sleep(1)
+            print("\nGoing back to menu...", end="")
+            time.sleep(1.5)
             break
-        elif choice.upper() == "PVC":
+        elif choice == "2" or choice.upper() == "PVC":
             playGamePVC()
-            print("\nGoing back to menu...\n")
-            time.sleep(2)
+            time.sleep(1)
+            print("\nGoing back to menu...", end="")
+            time.sleep(1.5)
             break
-        elif choice.upper() == "CVC":
+        elif choice == "3" or choice.upper() == "CVC":
             playGameCVC()
-            print("\nGoing back to menu...")
-            time.sleep(2)
+            time.sleep(1)
+            print("\nGoing back to menu...", end="")
+            time.sleep(1.5)
             break
-        elif choice.upper() == "QUIT":
+        elif choice == "4" or choice.upper() == "CIS":
+            INITIAL_STATE = changeInitialState()
+            print("\nNew initial state:")
+            printBoard(INITIAL_STATE)
+            time.sleep(1)
+            print("\nGoing back to menu...", end="")
+            time.sleep(1.5)
+            break
+        elif choice == "5" or choice.upper() == "RIS":
+            INITIAL_STATE = copy.deepcopy(OG_INITIAL_STATE)
+            print("\nReset initial state:")
+            printBoard(INITIAL_STATE)
+            time.sleep(1)
+            print("\nGoing back to menu...", end="")
+            time.sleep(1.5)
+            break
+        elif choice == "6" or choice.upper() == "QUIT" or choice.upper() == "Q":
             return 0
         else:
-            print("Please enter a valid game mode: ")
+            print("Please enter a valid game mode.\n")
+    print("\n")
     menu()
+
+def isValidInitialState(initState):
+    # 3 1 W 1 1 4 4 2 4 E (L that moves first, the two neutral pieces, L that moves second).
+    if(len(initState) == 19):
+        pattern = r"^\d \d [A-Za-z] \d \d \d \d \d \d [A-Za-z]$"
+        if not re.match(pattern, initState):
+            print("Incorrect formatting.")
+            return False
+        
+        nums = [0, 2, 6, 8, 10, 12, 14, 16]
+        for i in nums:
+            if(int(initState[i]) not in range(1, 5)):
+                print("One or more numbers not in range.")
+                return False
+
+        validDirections = ['E', 'S', 'W', 'N']
+        if(initState[4] not in validDirections or initState[18] not in validDirections):
+            print("Invalid direction.")
+            return False
+        
+        # check validity of L coords
+        lCoords1 = generateLCoords(int(initState[0]) - 1, int(initState[2]) - 1, initState[4])
+        lCoords2 = generateLCoords(int(initState[14]) - 1, int(initState[16]) - 1, initState[18])
+
+        # check coords bounds
+        for c in lCoords1:
+            if(c[0] < 0 or c[1] < 0 or c[0] > 3 or c[1] > 3):
+                print("One or more coordinates in first L out of bounds.")
+                return False
+        for c in lCoords2:
+            if(c[0] < 0 or c[1] < 0 or c[0] > 3 or c[1] > 3):
+                print("One or more coordinates in second L out of bounds.")
+                return False
+        
+        # check if L's are intersecting anywhere
+        for c1 in lCoords1:
+            for c2 in lCoords2:
+                if(c1[0] == c2[0] and c1[1] == c2[1]):
+                    print("L's are overalapping.")
+                    return False
+        
+        dot1 = (int(initState[6]) - 1, int(initState[8]) - 1)
+        dot2 = (int(initState[10]) - 1, int(initState[12]) - 1)
+        # check neutral piece bounds
+        if(dot1[0] < 0 or dot1[1] < 0 or dot1[0] > 3 or dot1[1] > 3):
+            print("Neutral piece 1 coordinates are out of bounds.")
+            return False
+        if(dot2[0] < 0 or dot2[1] < 0 or dot2[0] > 3 or dot2[1] > 3):
+            print("Neutral piece 1 coordinates are out of bounds.")
+            return False
+
+        # check if neutral pieces overlay Ls anywhere
+        if(dot1 in lCoords1 or dot1 in lCoords2):
+            print("Nuetral piece 1 placed over one of the Ls.")
+            return False
+        if(dot2 in lCoords1 or dot2 in lCoords2):
+            print("Nuetral piece 2 placed over one of the Ls.")
+            return False
+    else:
+        print("Incorrect Format - not the correct length.")
+        return False
+    return True # all good
+
+def changeInitialState():
+    initStateInput = ""
+    initStateBoard = copy.deepcopy(EMPTY_STATE)
+    while(initStateInput.upper() != "QUIT"):
+        initStateInput = input("Enter a new initial state: ")
+        if initStateInput.upper() != "QUIT" and initStateInput.upper() != "Q":
+            if not isValidInitialState(initStateInput):
+                print("Invalid initial state. Try again.\n")
+                continue
+            break
+        else:
+            quit()
+
+    # get coords for each piece
+    lCoords1 = generateLCoords(int(initStateInput[0]) - 1, int(initStateInput[2]) - 1, initStateInput[4])
+    lCoords2 = generateLCoords(int(initStateInput[14]) - 1, int(initStateInput[16]) - 1, initStateInput[18])
+    dot1 = (int(initStateInput[6]) - 1, int(initStateInput[8]) - 1)
+    dot2 = (int(initStateInput[10]) - 1, int(initStateInput[12]) - 1)
+
+    # applying coords to new initial state board
+    for c in lCoords1:
+        initStateBoard[c[0]][c[1]] = BLUE
+    for c in lCoords2:
+        initStateBoard[c[0]][c[1]] = RED
+    initStateBoard[dot1[0]][dot1[1]] = DOT
+    initStateBoard[dot2[0]][dot2[1]] = DOT
+    return initStateBoard
+        
+def generateLCoords(x, y, direction):
+    lCoords = [(x, y)]
+    if(direction == 'E'):
+        lCoords.extend([(x, y + 1), (x + 1, y), (x + 2, y)])
+    elif(direction == 'S'):
+        lCoords.extend([(x + 1, y), (x, y - 1), (x, y - 2)])
+    elif(direction == 'W'):
+        lCoords.extend([(x, y - 1), (x - 1, y), (x - 2, y)])
+    elif(direction == 'N'):
+        lCoords.extend([(x - 1, y), (x, y + 1), (x, y + 2)])
+    return lCoords
 
 def playGamePVP():
     board = copy.deepcopy(INITIAL_STATE)
@@ -207,9 +335,6 @@ def applyMove(board, move, agent):
         dotFinal = (int(move[10]) - 1, int(move[12]) - 1)
         board[dotInit[0]][dotInit[1]] = 0
         board[dotFinal[0]][dotFinal[1]] = 3
-
-def generateBoardFromInit(init):
-    board = [[]]
 
 def dotProximityToOpponent(dotPositions, opponentLCoords):
     score = 0
