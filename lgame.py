@@ -326,13 +326,33 @@ def applyMove(board, move, agent):
     lCoords = [(xMove, yMove)]
 
     if(orientation == 'E'):
-        lCoords.extend([(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)])
+        coords = [(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)]
+        coords1 = [(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)]
+        if(all(coordOutOfBounds(c) for c in coords)):
+            lCoords.extend(coords)
+        else:
+            lCoords.extend(coords1)
     elif(orientation == 'S'):
-        lCoords.extend([(xMove + 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)])
+        coords = [(xMove + 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)]
+        coords1 = [(xMove + 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)]
+        if(all(coordOutOfBounds(c) for c in coords)):
+            lCoords.extend(coords)
+        else:
+            lCoords.extend(coords1)
     elif(orientation == 'W'):
-        lCoords.extend([(xMove, yMove - 1), (xMove - 1, yMove), (xMove - 2, yMove)])
+        coords = [(xMove, yMove - 1), (xMove - 1, yMove), (xMove - 2, yMove)]
+        coords1 = [(xMove, yMove - 1), (xMove + 1, yMove), (xMove + 2, yMove)]
+        if(all(coordOutOfBounds(c) for c in coords)):
+            lCoords.extend(coords)
+        else:
+            lCoords.extend(coords1)
     elif(orientation == 'N'):
-        lCoords.extend([(xMove - 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)])
+        coords = [(xMove - 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)]
+        coords1 = [(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)]
+        if(all(coordOutOfBounds(c) for c in coords)):
+            lCoords.extend(coords)
+        else:
+            lCoords.extend(coords1)
 
     for coord in lCoords:
         board[coord[0]][coord[1]] = agent
@@ -692,6 +712,11 @@ def isValidMoveFormat(move):
     else:
         return False
 
+def coordOutOfBounds(coord):
+    if(coord[0] > 3 or coord[1] > 3 or coord[0] < 0 or coord[1] < 0):
+        return False
+    return True
+
 def isValidMove(gameState, agent, move):
     if(isValidMoveFormat(move)):
         #if dot moved, len(move) == 13, otherwise len(move) = 5
@@ -700,13 +725,35 @@ def isValidMove(gameState, agent, move):
         orientation = move[4]
         lCoords = [(xMove, yMove)]
         if(orientation == 'E'):
-            lCoords.extend([(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)])
+            coords = [(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)]
+            coords1 = [(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)]
+            if(all(coordOutOfBounds(c) for c in coords)):
+                lCoords.extend(coords)
+            else:
+                lCoords.extend(coords1)
         elif(orientation == 'S'):
-            lCoords.extend([(xMove + 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)])
+            coords = [(xMove + 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)]
+            coords1 = [(xMove + 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)]
+            if(all(coordOutOfBounds(c) for c in coords)):
+                lCoords.extend(coords)
+            else:
+                lCoords.extend(coords1)
         elif(orientation == 'W'):
-            lCoords.extend([(xMove, yMove - 1), (xMove - 1, yMove), (xMove - 2, yMove)])
+            coords = [(xMove, yMove - 1), (xMove - 1, yMove), (xMove - 2, yMove)]
+            coords1 = [(xMove, yMove - 1), (xMove + 1, yMove), (xMove + 2, yMove)]
+            if(all(coordOutOfBounds(c) for c in coords)):
+                lCoords.extend(coords)
+            else:
+                lCoords.extend(coords1)
         elif(orientation == 'N'):
-            lCoords.extend([(xMove - 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)])
+            coords = [(xMove - 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)]
+            coords1 = [(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)]
+            if(all(coordOutOfBounds(c) for c in coords)):
+                lCoords.extend(coords)
+            else:
+                lCoords.extend(coords1)
+
+        print(lCoords)
 
         for c in lCoords:
             if(invalidCoordinate((c[0], c[1]), gameState, agent)):
