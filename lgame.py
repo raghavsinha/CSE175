@@ -17,6 +17,7 @@ DOT = 3
 EMPTY_STATE = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
 INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 OG_INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
+repeatedStates = []
 
 def menu():
     print(Style.RESET_ALL + "-------------------------------")
@@ -31,6 +32,7 @@ def menu():
     choice = ""
 
     while(choice != "6"):
+        repeatedStates = []
         choice = input("Enter a number to choose your game mode: ")
         if choice == "1" or choice.upper() == "PVP":
             playGamePVP()
@@ -177,6 +179,7 @@ def generateLCoords(x, y, direction):
 
 def playGamePVP():
     board = copy.deepcopy(INITIAL_STATE)
+    repeatedStates.append(copy.deepcopy(board))
     move = ""
     agent = 1
     while(move != " quit"):
@@ -194,6 +197,7 @@ def playGamePVP():
 
         if(isValidMove(board, agent, move)):
             applyMove(board, move, agent)
+            repeatedStates.append(copy.deepcopy(board))
             agent = 2 if agent == 1 else 1 # flip agent
             possibleMoves = getSuccessors(board, agent)
             if(len(possibleMoves) == 0):
@@ -211,6 +215,7 @@ def playGamePVP():
 def playGamePVC():
     print("You are Blue! CPU is Red!")
     board = copy.deepcopy(INITIAL_STATE)
+    repeatedStates.append(copy.deepcopy(board))
     move = ""
     agent = 1
     while(move != "quit"):
@@ -224,6 +229,7 @@ def playGamePVC():
 
             if(isValidMove(board, agent, move)):
                 applyMove(board, move, agent)
+                repeatedStates.append(copy.deepcopy(board))
                 agent = 2 if agent == 1 else 1 # flip agent
                 possibleMoves = getSuccessors(board, agent)
                 if(len(possibleMoves) == 0):
@@ -239,6 +245,7 @@ def playGamePVC():
         else:
             print("CPU (Red) is moving...")
             board = getBestSuccessor(board, agent)
+            repeatedStates.append(copy.deepcopy(board))
             possibleMoves = getSuccessors(board, agent)
             agent = 2 if agent == 1 else 1 # flip agent
             if(len(possibleMoves) == 0):
@@ -253,6 +260,7 @@ def playGamePVC():
 def playGameCVC():
     print("CPU 1 is Blue! CPU 2 is Red!\n")
     board = copy.deepcopy(INITIAL_STATE)
+    repeatedStates.append(copy.deepcopy(board))
     agent = 1
     print("Board:")
     printBoard(board)
@@ -262,6 +270,7 @@ def playGameCVC():
         else: print("CPU 2 (Red) Is Moving...")
 
         board = getBestSuccessor(board, agent)
+        repeatedStates.append(copy.deepcopy(board))
 
         if(agent == 1):
             print("CPU 1 (Blue) Played:")
@@ -325,8 +334,6 @@ def applyMove(board, move, agent):
     elif(orientation == 'N'):
         lCoords.extend([(xMove - 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)])
 
-    print(lCoords)
-
     for coord in lCoords:
         board[coord[0]][coord[1]] = agent
 
@@ -344,9 +351,12 @@ def dotProximityToOpponent(dotPositions, opponentLCoords):
             score -= distance  # The closer, the more restrictive
     return score
 
+def isRepeatedState(gameState):
+    for s in repeatedStates:
+        if(compareStates(s, gameState)):
+            return True
+
 def evaluateAction(nextGameState, agent):
-    #print("Evaluating:")
-    #printBoard(nextGameState)
     # Define opponent agent
     nextAgent = 2 if agent == 1 else 1
 
@@ -354,29 +364,41 @@ def evaluateAction(nextGameState, agent):
     movesForCurrAgent = len(getSuccessors(nextGameState, agent))
     movesForOppAgent = len(getSuccessors(nextGameState, nextAgent))
 
-    if(movesForCurrAgent == None or movesForOppAgent == None):
-        print(movesForCurrAgent, movesForOppAgent)
-
     # Heuristic components
-    weightCurr = 1
-    weightOpp = 1
+    weightCurr = 1.5  # Increase weight for current agent's mobility to encourage proactive moves
+    weightOpp = 1     # Maintain weight for opponent to balance defense
 
     # Central position control
     centralPos = [(1, 1), (1, 2), (2, 1), (2, 2)]
-    centralControl = sum([0.5 for (x, y) in centralPos if nextGameState[x][y] == agent])
+    centralControl = sum([1.0 for (x, y) in centralPos if nextGameState[x][y] == agent])  # Increase influence of central control
 
-    superComp = 0
+    # Peg proximity control
+    pegProximity = 0
+    pegPositions = [(x, y) for x in range(len(nextGameState)) for y in range(len(nextGameState[0])) if nextGameState[x][y] == 'P']
+    for (x, y) in pegPositions:
+        # Calculate Manhattan distance to agent's L-piece
+        distances = [abs(x - lx) + abs(y - ly) for lx, ly in getLPositions(nextGameState, agent)]
+        pegProximity += sum(distances)
+    pegProximityWeight = -0.5  # Negative weight to encourage keeping distance from pegs
+
     # Super penalty or reward based on closeness to win/loss
-    if movesForOppAgent <= 1:
-        superComp = 150
-        #return float('inf')  # Winning move
+    superComp = 0
+    if movesForOppAgent == 0:
+        return float('inf')  # Winning move
+    elif movesForCurrAgent == 0:
+        return float('-inf')  # Losing move
+    elif movesForOppAgent <= 1:
+        superComp = 200  # Increase reward for limiting opponent's moves to 1 or less
     elif movesForCurrAgent <= 1:
-        superComp = -150
-        #return float('-inf')  # Losing move
+        superComp = -200  # Increase penalty for having 1 or fewer moves left
+
+    # Cycle penalty
+    cyclePenalty = 0
+    if isRepeatedState(nextGameState):
+        cyclePenalty = -100  # Penalize moves that result in repeated states to avoid cycles
 
     # Final evaluation score
-    #print("Eval Score:", ((weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl))
-    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp
+    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp + (pegProximityWeight * pegProximity) + cyclePenalty
 
 def isStateInStates(state, stateList):
     for s in stateList:
@@ -655,6 +677,11 @@ def isValidMove(gameState, agent, move):
         for c in lCoords:
             if(invalidCoordinate((c[0], c[1]), gameState, agent)):
                 return False
+            
+        currLCoords = getCurrentLCoords(gameState, agent)
+        if(compareLCoords(currLCoords, lCoords)):
+            print("Cannot move to same position. ", end="")
+            return False
 
         if(len(move) > 5):
             dotInit = (int(move[6]) - 1, int(move[8]) - 1)
