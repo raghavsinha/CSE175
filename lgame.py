@@ -18,6 +18,8 @@ EMPTY_STATE = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
 INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 OG_INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 repeatedStates = []
+evaluatedStates = []
+evaluatedEvals = []
 
 def menu():
     print(Style.RESET_ALL + "-------------------------------")
@@ -322,6 +324,7 @@ def applyMove(board, move, agent):
     #1 2 E 4 3 1 1
     xMove = int(move[0]) - 1
     yMove = int(move[2]) - 1
+
     orientation = move[4]
     lCoords = [(xMove, yMove)]
 
@@ -395,7 +398,7 @@ def evaluateAction(nextGameState, agent):
 
     # Central position control
     centralPos = [(1, 1), (1, 2), (2, 1), (2, 2)]
-    centralControl = sum([0.5 for (x, y) in centralPos if nextGameState[x][y] == agent])
+    centralControl = sum([5 for (x, y) in centralPos if nextGameState[x][y] == agent])
 
     superComp = 0
     # Super penalty or reward based on closeness to win/loss
@@ -428,7 +431,7 @@ def evaluateAction1(nextGameState, agent):
 
     # Peg proximity control
     pegProximity = 0
-    pegPositions = [(x, y) for x in range(len(nextGameState)) for y in range(len(nextGameState[0])) if nextGameState[x][y] == 'P']
+    pegPositions = [(x, y) for x in range(len(nextGameState)) for y in range(len(nextGameState[0])) if nextGameState[x][y] == DOT]
     for (x, y) in pegPositions:
         # Calculate Manhattan distance to agent's L-piece
         distances = [abs(x - lx) + abs(y - ly) for lx, ly in getCurrentLCoords(nextGameState, agent)]
@@ -460,6 +463,12 @@ def isStateInStates(state, stateList):
             return True
     return False
 
+def findStateInStates(state, stateList):
+    for s in range(0, len(stateList)):
+        if(compareStates(stateList[s], state)):
+            return s
+    return -1
+
 def compareStates(state1, state2):
     for i in range(0, 4):
             for j in range(0, 4):
@@ -468,13 +477,21 @@ def compareStates(state1, state2):
     return True
 
 def getBestSuccessor(gameState, agent):
-    def minimax(board, depth, alpha, beta, mAgent, isMaxAgent):
-        #getSuccessors, heuristic, and evaluation
+    def minimax(board, depth, alpha, beta, mAgent, isMaxAgent):\
+        # if state is not in evaluated states, eval = -1
+        locatedState = findStateInStates(board, evaluatedStates)
+        if(locatedState != -1):
+            eval = evaluatedEvals[locatedState]
+            return eval
+        
         successors = getSuccessors(board, mAgent)
         if depth == maxDepth or len(successors) == 0:
+            #print("depth:", depth, "| Evaluated State Len:", len(evaluatedStates))
             eval = evaluateAction(board, mAgent)
-            #print("Board:", board, "| Eval:", eval)
+            evaluatedStates.append(board)
+            evaluatedEvals.append(eval)
             return eval
+
         elif isMaxAgent: # max agent
             return maxValue(board, depth, alpha, beta, mAgent)
         else: # min agent
@@ -508,7 +525,7 @@ def getBestSuccessor(gameState, agent):
         mAgent = nextAgent # flip agent
         return minEval
     
-    maxDepth = 2
+    maxDepth = 50
     bestScore = float('-inf') # min init val
     bestSuccessor = None
     successors = getSuccessors(gameState, agent)
@@ -722,6 +739,7 @@ def isValidMove(gameState, agent, move):
         #if dot moved, len(move) == 13, otherwise len(move) = 5
         xMove = int(move[0]) - 1
         yMove = int(move[2]) - 1
+
         orientation = move[4]
         lCoords = [(xMove, yMove)]
         if(orientation == 'E'):
