@@ -15,21 +15,24 @@ BLUE = 1
 RED = 2
 DOT = 3
 EMPTY_STATE = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
-INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
+INITIAL_STATE = [[3, 2, 2, 0], [0, 1, 2, 0], [0, 1, 2, 0], [0, 1, 1, 3]]
 OG_INITIAL_STATE = [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]]
 repeatedStates = []
-evaluatedStates = []
-evaluatedEvals = []
+evaluatedStatesMax = []
+evaluatedEvalsMax = []
+evaluatedStatesMin = []
+evaluatedEvalsMin = []
 
 def menu():
     print(Style.RESET_ALL + "-------------------------------")
     print(Fore.GREEN + "Welcome to L Game!")
     print(Fore.RED + "   1. Player v Player")
-    print("   2. Player v CPU")
-    print("   3. CPU v CPU")
-    print("   4. Change initial state")
-    print("   5. Reset initial state")
-    print("   6. Quit")
+    print("   2. Player v CPU, Player Starts")
+    print("   3. Player v CPU, CPU Starts")
+    print("   4. CPU v CPU")
+    print("   5. Change initial state")
+    print("   6. Reset initial state")
+    print("   7. Quit")
     print(Style.RESET_ALL)
     choice = ""
 
@@ -42,19 +45,25 @@ def menu():
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "2" or choice.upper() == "PVC":
-            playGamePVC()
+        elif choice == "2" or choice.upper() == "PVC1":
+            playGamePVC(1)
             time.sleep(1)
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "3" or choice.upper() == "CVC":
+        elif choice == "3" or choice.upper() == "PVC2":
+            playGamePVC(2)
+            time.sleep(1)
+            print("\nGoing back to menu...", end="")
+            time.sleep(1.5)
+            break
+        elif choice == "4" or choice.upper() == "CVC":
             playGameCVC()
             time.sleep(1)
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "4" or choice.upper() == "CIS":
+        elif choice == "5" or choice.upper() == "CIS":
             INITIAL_STATE = changeInitialState()
             print("\nNew initial state:")
             printBoard(INITIAL_STATE)
@@ -62,7 +71,7 @@ def menu():
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "5" or choice.upper() == "RIS":
+        elif choice == "6" or choice.upper() == "RIS":
             INITIAL_STATE = copy.deepcopy(OG_INITIAL_STATE)
             print("\nReset initial state:")
             printBoard(INITIAL_STATE)
@@ -70,7 +79,7 @@ def menu():
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "6" or choice.upper() == "QUIT" or choice.upper() == "Q":
+        elif choice == "7" or choice.upper() == "QUIT" or choice.upper() == "Q":
             return 0
         else:
             print("Please enter a valid game mode.\n")
@@ -185,19 +194,23 @@ def playGamePVP():
     move = ""
     agent = 1
     while(move != " quit"):
-        print("Board:")
+        print("Current Board:")
         printBoard(board)
         print("")
 
         if(agent == 1):
-            move = input("Enter blue player move: ")
+            move = input("Enter blue player move, or \"hint\" for a suggested move: ")
             if(move == "quit"): break
         else:
-            move = input("Enter red player move: ")  
+            move = input("Enter red player move, or \"hint\" for a suggested move: ")  
             if(move == "quit"): break
         
-
-        if(isValidMove(board, agent, move)):
+        if(move.upper() == "HINT"):
+            print("Suggested Move:")
+            suggest = getBestSuccessor(board, agent)
+            printBoard(suggest)
+            print("\n")
+        elif(isValidMove(board, agent, move)):
             applyMove(board, move, agent)
             repeatedStates.append(copy.deepcopy(board))
             agent = 2 if agent == 1 else 1 # flip agent
@@ -214,32 +227,36 @@ def playGamePVP():
             print("Invalid move. Try again.")
     return 0
 
-def playGamePVC():
+def playGamePVC(agent):
     print("You are Blue! CPU is Red!")
     board = copy.deepcopy(INITIAL_STATE)
     repeatedStates.append(copy.deepcopy(board))
     move = ""
-    agent = 1
     while(move != "quit"):
         print("Board:")
         printBoard(board)
         print("")
 
         if(agent == 1):
-            move = input("Enter move: ")
+            move = input("Enter blue player move, or \"hint\" for a suggested move: ")
             if(move == "quit"): break
 
-            if(isValidMove(board, agent, move)):
+            if(move.upper() == "HINT"):
+                print("Suggested Move:")
+                suggest = getBestSuccessor(board, agent)
+                printBoard(suggest)
+                print("\n")
+            elif(isValidMove(board, agent, move)):
                 applyMove(board, move, agent)
                 repeatedStates.append(copy.deepcopy(board))
                 agent = 2 if agent == 1 else 1 # flip agent
                 possibleMoves = getSuccessors(board, agent)
                 if(len(possibleMoves) == 0):
                     if(agent == 2):
-                        print("CPU wins!")
+                        print("Player wins!")
                         return 0
                     else:
-                        print("Player wins!")
+                        print("CPU wins!")
                         return 0
                     break
             else:
@@ -252,9 +269,9 @@ def playGamePVC():
             agent = 2 if agent == 1 else 1 # flip agent
             if(len(possibleMoves) == 0):
                 if(agent == 2):
-                    print("CPU wins!")
-                else:
                     print("Player wins!")
+                else:
+                    print("CPU wins!")
                 break
 
     return 0
@@ -272,6 +289,8 @@ def playGameCVC():
         else: print("CPU 2 (Red) Is Moving...")
 
         board = getBestSuccessor(board, agent)
+        if(board == None):
+            print("Board is Null")
         repeatedStates.append(copy.deepcopy(board))
 
         if(agent == 1):
@@ -285,13 +304,14 @@ def playGameCVC():
 
         agent = 2 if agent == 1 else 1 # flip agent
         possibleMoves = getSuccessors(board, agent)
+        #print("Possible moves for agent", agent, "")
 
         if(len(possibleMoves) == 0):
-            if(agent == 2):
-                print("CPU 2 (Red) wins!")
+            if(agent == 2): # red has no more moves
+                print("CPU 2 (Blue) wins!")
                 return 0
-            else:
-                print("CPU 1 (Blue) wins!")
+            else: # blue has no more moves
+                print("CPU 1 (Red) wins!")
                 return 0
             break
     return 0
@@ -322,8 +342,8 @@ def applyMove(board, move, agent):
                 board[i][j] = 0
 
     #1 2 E 4 3 1 1
-    xMove = int(move[0]) - 1
-    yMove = int(move[2]) - 1
+    xMove = int(move[2]) - 1
+    yMove = int(move[0]) - 1
 
     orientation = move[4]
     lCoords = [(xMove, yMove)]
@@ -361,8 +381,8 @@ def applyMove(board, move, agent):
         board[coord[0]][coord[1]] = agent
 
     if(len(move) > 5):
-        dotInit = (int(move[6]) - 1, int(move[8]) - 1)
-        dotFinal = (int(move[10]) - 1, int(move[12]) - 1)
+        dotInit = (int(move[8]) - 1, int(move[6]) - 1)
+        dotFinal = (int(move[12]) - 1, int(move[10]) - 1)
         board[dotInit[0]][dotInit[1]] = 0
         board[dotFinal[0]][dotFinal[1]] = 3
 
@@ -393,25 +413,24 @@ def evaluateAction(nextGameState, agent):
         print(movesForCurrAgent, movesForOppAgent)
 
     # Heuristic components
-    weightCurr = 1
-    weightOpp = 1
+    weightCurr = 1.27
+    weightOpp = 2.46
 
     # Central position control
     centralPos = [(1, 1), (1, 2), (2, 1), (2, 2)]
-    centralControl = sum([5 for (x, y) in centralPos if nextGameState[x][y] == agent])
+    centralControl = sum([1.5 for (x, y) in centralPos if nextGameState[x][y] == agent])
+    oppCentralControl = sum([2.5 for (x, y) in centralPos if nextGameState[x][y] == nextAgent])
 
     superComp = 0
     # Super penalty or reward based on closeness to win/loss
     if movesForOppAgent <= 1:
         superComp = 150
-        #return float('inf')  # Winning move
     elif movesForCurrAgent <= 1:
         superComp = -150
-        #return float('-inf')  # Losing move
 
     # Final evaluation score
     #print("Eval Score:", ((weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl))
-    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp
+    return (weightCurr * movesForCurrAgent)/(weightOpp * movesForOppAgent) + centralControl/oppCentralControl + superComp
 
 def evaluateAction1(nextGameState, agent):
     # Define opponent agent
@@ -477,19 +496,33 @@ def compareStates(state1, state2):
     return True
 
 def getBestSuccessor(gameState, agent):
-    def minimax(board, depth, alpha, beta, mAgent, isMaxAgent):\
+    def minimax(board, depth, alpha, beta, mAgent, isMaxAgent):
         # if state is not in evaluated states, eval = -1
-        locatedState = findStateInStates(board, evaluatedStates)
-        if(locatedState != -1):
-            eval = evaluatedEvals[locatedState]
-            return eval
+        if(isMaxAgent):
+            locatedState = findStateInStates(board, evaluatedStatesMax)
+            if(locatedState != -1):
+                eval = evaluatedEvalsMax[locatedState]
+                #print("Max: Found Match")
+                return eval
+            #else:
+                #print("Depth:", depth, "| Max:", len(evaluatedEvalsMax), "| Min:", len(evaluatedEvalsMin))
+        else:
+            locatedState = findStateInStates(board, evaluatedStatesMin)
+            if(locatedState != -1):
+                eval = evaluatedEvalsMin[locatedState]
+                return eval
+            #selse:
+                #print("Depth:", depth, "| Max:", len(evaluatedEvalsMax), "| Min:", len(evaluatedEvalsMin))
         
         successors = getSuccessors(board, mAgent)
         if depth == maxDepth or len(successors) == 0:
-            #print("depth:", depth, "| Evaluated State Len:", len(evaluatedStates))
             eval = evaluateAction(board, mAgent)
-            evaluatedStates.append(board)
-            evaluatedEvals.append(eval)
+            if(isMaxAgent):
+                evaluatedStatesMax.append(board)
+                evaluatedEvalsMax.append(eval)
+            else:
+                evaluatedStatesMin.append(board)
+                evaluatedEvalsMin.append(eval)
             return eval
 
         elif isMaxAgent: # max agent
@@ -503,8 +536,9 @@ def getBestSuccessor(gameState, agent):
         successors = getSuccessors(board, mAgent)
         nextAgent = 2 if mAgent == 1 else 1
         for successor in successors:
+            # checking list
             eval = minimax(successor, depth + 1, alpha, beta, nextAgent, False)
-            #print("Eval:", eval, "\n")
+            # saving into list
             maxEval = max(maxEval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -525,7 +559,7 @@ def getBestSuccessor(gameState, agent):
         mAgent = nextAgent # flip agent
         return minEval
     
-    maxDepth = 50
+    maxDepth = 20
     bestScore = float('-inf') # min init val
     bestSuccessor = None
     successors = getSuccessors(gameState, agent)
@@ -534,6 +568,8 @@ def getBestSuccessor(gameState, agent):
     minimaxAgent = agent
     for successor in successors:
         score = minimax(successor, 1, float('-inf'), float('inf'), minimaxAgent, True)
+        #print("Max:", len(evaluatedEvalsMax), "| Min:", len(evaluatedEvalsMin))
+        #print("calculated score:", score)
         #print("IT STOPPEDDD!") 
         if score > bestScore: 
             bestScore = score
@@ -543,7 +579,25 @@ def getBestSuccessor(gameState, agent):
     #print("Best Successor Eval: ", bestScore)
     #print("BEST SUCCESSOR FOUND:")
     #printBoard(bestSuccessor)
+    #print(bestSuccessor)
     return bestSuccessor
+
+#def generateMove(initState, finalState):
+#    blueInitLCoords = getCurrentLCoords(initState, 1)
+#    blueFinalLCoords = getCurrentLCoords(finalState, 1)
+#    redInitLCoords = getCurrentLCoords(initState, 2)
+#    redFinalLCoords = getCurrentLCoords(finalState, 2)
+#
+#    if(compareLCoords(blueInitLCoords, blueFinalLCoords)):
+#        
+#    else:
+#
+#
+    # find neutral piece that changed
+#    dotsInit = getDotCoords(initState)
+#    dotsFinal = getDotCoords(finalState)
+#
+#    if(dotsInit == dotsFinal):
 
 def invalidCoordinate(coord, gameState, agent):
     #print(f"Debug: coord={coord}, type={type(coord)}")  # Debugging line
@@ -569,6 +623,21 @@ def getLegalDotPos(nextGameState, dot1, dot2):
               validDotPositions.append((dot1, (i, j)))
 
     return validDotPositions
+
+def getDotCoords(gameState):
+    for i in range(0, 4):
+        for j in range(0, 4):
+            # getting values for the starting points of each neutral piece
+            if(dot1Init == None or dot2Init == None):
+                # if (i,j) is a dot...
+                if(gameState[i][j] == DOT):
+                    # and we haven't found dot 1, then this is dot 1
+                    if(dot1Init == None):
+                        dot1Init = (i, j)
+                    # and we have found dot 1, then this is dot 2
+                    else:
+                        dot2Init = (i, j)
+    return (dot1Init, dot2Init)
 
 def getCurrentLCoords(gameState, agent):
     lCoords = []
@@ -737,8 +806,8 @@ def coordOutOfBounds(coord):
 def isValidMove(gameState, agent, move):
     if(isValidMoveFormat(move)):
         #if dot moved, len(move) == 13, otherwise len(move) = 5
-        xMove = int(move[0]) - 1
-        yMove = int(move[2]) - 1
+        xMove = int(move[2]) - 1
+        yMove = int(move[0]) - 1
 
         orientation = move[4]
         lCoords = [(xMove, yMove)]
@@ -783,8 +852,8 @@ def isValidMove(gameState, agent, move):
             return False
 
         if(len(move) > 5):
-            dotInit = (int(move[6]) - 1, int(move[8]) - 1)
-            dotFinal = (int(move[10]) - 1, int(move[12]) - 1)
+            dotInit = (int(move[8]) - 1, int(move[6]) - 1)
+            dotFinal = (int(move[12]) - 1, int(move[10]) - 1)
             if(dotInit == dotFinal):
                 return False
             if(gameState[dotInit[0]][dotInit[1]] != DOT):
