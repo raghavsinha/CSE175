@@ -430,7 +430,7 @@ def evaluateAction(nextGameState, agent):
 
     # Final evaluation score
     #print("Eval Score:", ((weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl))
-    return (weightCurr * movesForCurrAgent)/(weightOpp * movesForOppAgent) + centralControl/oppCentralControl + superComp
+    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl - oppCentralControl + superComp
 
 def evaluateAction1(nextGameState, agent):
     # Define opponent agent
