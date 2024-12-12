@@ -559,7 +559,7 @@ def getBestSuccessor(gameState, agent):
         mAgent = nextAgent # flip agent
         return minEval
     
-    maxDepth = 20
+    maxDepth = 25
     bestScore = float('-inf') # min init val
     bestSuccessor = None
     successors = getSuccessors(gameState, agent)
