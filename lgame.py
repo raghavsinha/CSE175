@@ -469,12 +469,12 @@ def evaluateAction1(nextGameState, agent):
         superComp = -200  # Increase penalty for having 1 or fewer moves left
 
     # Cycle penalty
-    cyclePenalty = 0
-    if isRepeatedState(nextGameState):
-        cyclePenalty = -100  # Penalize moves that result in repeated states to avoid cycles
+    #cyclePenalty = 0
+    #if isRepeatedState(nextGameState):
+    #    cyclePenalty = -100  # Penalize moves that result in repeated states to avoid cycles
 
     # Final evaluation score
-    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp + (pegProximityWeight * pegProximity) + cyclePenalty
+    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp + (pegProximityWeight * pegProximity) #+ cyclePenalty
 
 def isStateInStates(state, stateList):
     for s in stateList:
@@ -516,7 +516,7 @@ def getBestSuccessor(gameState, agent):
         
         successors = getSuccessors(board, mAgent)
         if depth == maxDepth or len(successors) == 0:
-            eval = evaluateAction(board, mAgent)
+            eval = evaluateAction1(board, mAgent)
             if(isMaxAgent):
                 evaluatedStatesMax.append(board)
                 evaluatedEvalsMax.append(eval)
