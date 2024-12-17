@@ -123,7 +123,7 @@ def isValidInitialState(initState):
         for c1 in lCoords1:
             for c2 in lCoords2:
                 if(c1[0] == c2[0] and c1[1] == c2[1]):
-                    print("L's are overalapping.")
+                    print("L's are overlapping.")
                     return False
         
         dot1 = (int(initState[6]) - 1, int(initState[8]) - 1)
@@ -138,10 +138,10 @@ def isValidInitialState(initState):
 
         # check if neutral pieces overlay Ls anywhere
         if(dot1 in lCoords1 or dot1 in lCoords2):
-            print("Nuetral piece 1 placed over one of the Ls.")
+            print("Neutral piece 1 placed over one of the Ls.")
             return False
         if(dot2 in lCoords1 or dot2 in lCoords2):
-            print("Nuetral piece 2 placed over one of the Ls.")
+            print("Neutral piece 2 placed over one of the Ls.")
             return False
     else:
         print("Incorrect Format - not the correct length.")
