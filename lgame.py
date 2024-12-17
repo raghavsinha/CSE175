@@ -23,7 +23,9 @@ evaluatedEvalsMax = []
 evaluatedStatesMin = []
 evaluatedEvalsMin = []
 
+# presents menu options to user for play game
 def menu():
+    # print menu
     print(Style.RESET_ALL + "-------------------------------")
     print(Fore.GREEN + "Welcome to L Game!")
     print(Fore.RED + "   1. Player v Player")
@@ -39,31 +41,31 @@ def menu():
     while(choice != "6"):
         repeatedStates = []
         choice = input("Enter a number to choose your game mode: ")
-        if choice == "1" or choice.upper() == "PVP":
+        if choice == "1" or choice.upper() == "PVP": # pvp
             playGamePVP()
             time.sleep(1)
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "2" or choice.upper() == "PVC1":
+        elif choice == "2" or choice.upper() == "PVC1": # pvc where player starts
             playGamePVC(1)
             time.sleep(1)
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "3" or choice.upper() == "PVC2":
+        elif choice == "3" or choice.upper() == "PVC2": # pvc where ai starts
             playGamePVC(2)
             time.sleep(1)
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "4" or choice.upper() == "CVC":
+        elif choice == "4" or choice.upper() == "CVC": #cvc
             playGameCVC()
             time.sleep(1)
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "5" or choice.upper() == "CIS":
+        elif choice == "5" or choice.upper() == "CIS": # change initial state
             INITIAL_STATE = changeInitialState()
             print("\nNew initial state:")
             printBoard(INITIAL_STATE)
@@ -71,7 +73,7 @@ def menu():
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "6" or choice.upper() == "RIS":
+        elif choice == "6" or choice.upper() == "RIS": # reset initial state to default
             INITIAL_STATE = copy.deepcopy(OG_INITIAL_STATE)
             print("\nReset initial state:")
             printBoard(INITIAL_STATE)
@@ -79,16 +81,17 @@ def menu():
             print("\nGoing back to menu...", end="")
             time.sleep(1.5)
             break
-        elif choice == "7" or choice.upper() == "QUIT" or choice.upper() == "Q":
+        elif choice == "7" or choice.upper() == "QUIT" or choice.upper() == "Q": # quit program
             return 0
         else:
             print("Please enter a valid game mode.\n")
     print("\n")
-    menu()
+    menu() # menu will recurse until quit
 
+# validates if given initial state is a valid state by ruling our overlapping Ls, invalid numerals, etc
 def isValidInitialState(initState):
     # 3 1 W 1 1 4 4 2 4 E (L that moves first, the two neutral pieces, L that moves second).
-    if(len(initState) == 19):
+    if(len(initState) == 19): # verifies that given string state follows proper form
         pattern = r"^\d \d [A-Za-z] \d \d \d \d \d \d [A-Za-z]$"
         if not re.match(pattern, initState):
             print("Incorrect formatting.")
@@ -148,6 +151,7 @@ def isValidInitialState(initState):
         return False
     return True # all good
 
+# prompts user for new initial state, validates, and changes the INITIAL_STATE variable
 def changeInitialState():
     initStateInput = ""
     initStateBoard = copy.deepcopy(EMPTY_STATE)
@@ -176,18 +180,20 @@ def changeInitialState():
     initStateBoard[dot2[0]][dot2[1]] = DOT
     return initStateBoard
         
+# generates the L coordinates of an L given the x,y, and direction from the move
 def generateLCoords(x, y, direction):
     lCoords = [(x, y)]
-    if(direction == 'E'):
+    if(direction == 'E'): # east direction
         lCoords.extend([(x, y + 1), (x + 1, y), (x + 2, y)])
-    elif(direction == 'S'):
+    elif(direction == 'S'): # south direction
         lCoords.extend([(x + 1, y), (x, y - 1), (x, y - 2)])
-    elif(direction == 'W'):
+    elif(direction == 'W'): # west direction
         lCoords.extend([(x, y - 1), (x - 1, y), (x - 2, y)])
-    elif(direction == 'N'):
+    elif(direction == 'N'): # north direction
         lCoords.extend([(x - 1, y), (x, y + 1), (x, y + 2)])
     return lCoords
 
+# play the player vs player game
 def playGamePVP():
     board = copy.deepcopy(INITIAL_STATE)
     repeatedStates.append(copy.deepcopy(board))
@@ -198,23 +204,23 @@ def playGamePVP():
         printBoard(board)
         print("")
 
-        if(agent == 1):
+        if(agent == 1): # receive mmoves for eithr playe
             move = input("Enter blue player move, or \"hint\" for a suggested move: ")
             if(move == "quit"): break
         else:
             move = input("Enter red player move, or \"hint\" for a suggested move: ")  
             if(move == "quit"): break
         
-        if(move.upper() == "HINT"):
+        if(move.upper() == "HINT"): # check for hint
             print("Suggested Move:")
-            suggest = getBestSuccessor(board, agent)
+            suggest = getBestSuccessor(board, agent) # use ai to generate hint
             printBoard(suggest)
             print("\n")
         elif(isValidMove(board, agent, move)):
             applyMove(board, move, agent)
             repeatedStates.append(copy.deepcopy(board))
             agent = 2 if agent == 1 else 1 # flip agent
-            possibleMoves = getSuccessors(board, agent)
+            possibleMoves = getSuccessors(board, agent) # check if win/loss has occurred
             if(len(possibleMoves) == 0):
                 if(agent == 1):
                     print("Red Player wins!")
@@ -227,6 +233,7 @@ def playGamePVP():
             print("Invalid move. Try again.")
     return 0
 
+# plays the player vs computer game, accepting the agent to allow user choice to go first or second
 def playGamePVC(agent):
     print("You are Blue! CPU is Red!")
     board = copy.deepcopy(INITIAL_STATE)
@@ -238,12 +245,12 @@ def playGamePVC(agent):
         print("")
 
         if(agent == 1):
-            move = input("Enter blue player move, or \"hint\" for a suggested move: ")
+            move = input("Enter blue player move, or \"hint\" for a suggested move: ") # get player move
             if(move == "quit"): break
 
             if(move.upper() == "HINT"):
                 print("Suggested Move:")
-                suggest = getBestSuccessor(board, agent)
+                suggest = getBestSuccessor(board, agent) # call ai to generate move
                 printBoard(suggest)
                 print("\n")
             elif(isValidMove(board, agent, move)):
@@ -251,7 +258,7 @@ def playGamePVC(agent):
                 repeatedStates.append(copy.deepcopy(board))
                 agent = 2 if agent == 1 else 1 # flip agent
                 possibleMoves = getSuccessors(board, agent)
-                if(len(possibleMoves) == 0):
+                if(len(possibleMoves) == 0): # check for win or loss
                     if(agent == 2):
                         print("Player wins!")
                         return 0
@@ -276,6 +283,7 @@ def playGamePVC(agent):
 
     return 0
 
+# plays the computer vs computer game
 def playGameCVC():
     print("CPU 1 is Blue! CPU 2 is Red!\n")
     board = copy.deepcopy(INITIAL_STATE)
@@ -288,7 +296,7 @@ def playGameCVC():
         if(agent == 1): print("CPU 1 (Blue) Is Moving...")
         else: print("CPU 2 (Red) Is Moving...")
 
-        board = getBestSuccessor(board, agent)
+        board = getBestSuccessor(board, agent) # generates ai move for either cpu agent
         if(board == None):
             print("Board is Null")
         repeatedStates.append(copy.deepcopy(board))
@@ -304,9 +312,8 @@ def playGameCVC():
 
         agent = 2 if agent == 1 else 1 # flip agent
         possibleMoves = getSuccessors(board, agent)
-        #print("Possible moves for agent", agent, "")
 
-        if(len(possibleMoves) == 0):
+        if(len(possibleMoves) == 0): # checks win/loss case
             if(agent == 2): # red has no more moves
                 print("CPU 2 (Blue) wins!")
                 return 0
@@ -316,6 +323,7 @@ def playGameCVC():
             break
     return 0
 
+# prints the board in an appealing fashion using colors
 def printBoard(board):
     print(Style.RESET_ALL, end="")
     for i in board:
@@ -323,17 +331,18 @@ def printBoard(board):
             if j == 0:
                 print("*", end=" ")
                 print(Style.RESET_ALL, end="")
-            elif j == 1:
+            elif j == 1: # blue agent
                 print(Fore.BLUE + "█", end=" ")
                 print(Style.RESET_ALL, end="")
-            elif j == 2:
+            elif j == 2: # red agent
                 print(Fore.RED + "█", end=" ")
                 print(Style.RESET_ALL, end="")
-            elif j == 3:
+            elif j == 3: # neutral piece
                 print("█", end=" ")
                 print(Style.RESET_ALL, end="")
         print("")
 
+# given the board, a move, and the agent, applies the given move to the board for the agent
 def applyMove(board, move, agent):
     #resetting current agent position in board
     for i in range(0, 4):
@@ -348,6 +357,7 @@ def applyMove(board, move, agent):
     orientation = move[4]
     lCoords = [(xMove, yMove)]
 
+    # generate new L coords for any of the orientations
     if(orientation == 'E'):
         coords = [(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)]
         coords1 = [(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)]
@@ -377,15 +387,18 @@ def applyMove(board, move, agent):
         else:
             lCoords.extend(coords1)
 
+    # set agent coordinates with newly generated coordinates
     for coord in lCoords:
         board[coord[0]][coord[1]] = agent
 
+    # move neutral pieces
     if(len(move) > 5):
         dotInit = (int(move[8]) - 1, int(move[6]) - 1)
         dotFinal = (int(move[12]) - 1, int(move[10]) - 1)
         board[dotInit[0]][dotInit[1]] = 0
         board[dotFinal[0]][dotFinal[1]] = 3
 
+# returns a list of distances for each neutral piece to each of the L coords
 def dotProximityToOpponent(dotPositions, opponentLCoords):
     score = 0
     for dot in dotPositions:
@@ -394,14 +407,8 @@ def dotProximityToOpponent(dotPositions, opponentLCoords):
             score -= distance  # The closer, the more restrictive
     return score
 
-def isRepeatedState(gameState):
-    for s in repeatedStates:
-        if(compareStates(s, gameState)):
-            return True
-
+# Heuristic function - evaluates proposed next game state for the current agent for how likely it is to get to a win
 def evaluateAction(nextGameState, agent):
-    #print("Evaluating:")
-    #printBoard(nextGameState)
     # Define opponent agent
     nextAgent = 2 if agent == 1 else 1
 
@@ -421,6 +428,14 @@ def evaluateAction(nextGameState, agent):
     centralControl = sum([1.5 for (x, y) in centralPos if nextGameState[x][y] == agent])
     oppCentralControl = sum([2.5 for (x, y) in centralPos if nextGameState[x][y] == nextAgent])
 
+    dotProximity = 0
+    dotPositions = [(x, y) for x in range(len(nextGameState)) for y in range(len(nextGameState[0])) if nextGameState[x][y] == DOT]
+    for (x, y) in dotPositions:
+        # Calculate Manhattan distance to agent's L-piece
+        distances = [abs(x - lx) + abs(y - ly) for lx, ly in getCurrentLCoords(nextGameState, agent)]
+        dotProximity += sum(distances)
+    dotProximityWeight = -0.5  # Negative weight to encourage keeping distance from dots
+
     superComp = 0
     # Super penalty or reward based on closeness to win/loss
     if movesForOppAgent <= 1:
@@ -428,11 +443,15 @@ def evaluateAction(nextGameState, agent):
     elif movesForCurrAgent <= 1:
         superComp = -150
 
+    antiCycle = 0
+    if(isStateInStates(nextGameState, repeatedStates)):
+        antiCycle = -10
+    else:
+        antiCycle = 10
+
     # Final evaluation score
     #print("Eval Score:", ((weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl))
-    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl - oppCentralControl + superComp
-
-def evaluateAction1(nextGameState, agent):
+    return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl - oppCentralControl + superComp + antiCycle + (dotProximityWeight * dotProximity)
     # Define opponent agent
     nextAgent = 2 if agent == 1 else 1
 
@@ -468,26 +487,24 @@ def evaluateAction1(nextGameState, agent):
     elif movesForCurrAgent <= 1:
         superComp = -200  # Increase penalty for having 1 or fewer moves left
 
-    # Cycle penalty
-    cyclePenalty = 0
-    if isRepeatedState(nextGameState):
-        cyclePenalty = -100  # Penalize moves that result in repeated states to avoid cycles
-
     # Final evaluation score
     return (weightCurr * movesForCurrAgent) - (weightOpp * movesForOppAgent) + centralControl + superComp + (pegProximityWeight * pegProximity) + cyclePenalty
 
+# checks if given state is in given states list
 def isStateInStates(state, stateList):
     for s in stateList:
         if(compareStates(s, state)):
             return True
     return False
 
+# returns position of given state in given states list, -1 if not found
 def findStateInStates(state, stateList):
     for s in range(0, len(stateList)):
         if(compareStates(stateList[s], state)):
             return s
     return -1
 
+# compares every coordinate in 2 given states and returns true if they are equal, false if not
 def compareStates(state1, state2):
     for i in range(0, 4):
             for j in range(0, 4):
@@ -495,6 +512,7 @@ def compareStates(state1, state2):
                     return False
     return True
 
+# Minimax AI function - executes minimax on every succesor state for current state and returns one with best eval
 def getBestSuccessor(gameState, agent):
     def minimax(board, depth, alpha, beta, mAgent, isMaxAgent):
         # if state is not in evaluated states, eval = -1
@@ -502,17 +520,12 @@ def getBestSuccessor(gameState, agent):
             locatedState = findStateInStates(board, evaluatedStatesMax)
             if(locatedState != -1):
                 eval = evaluatedEvalsMax[locatedState]
-                #print("Max: Found Match")
                 return eval
-            #else:
-                #print("Depth:", depth, "| Max:", len(evaluatedEvalsMax), "| Min:", len(evaluatedEvalsMin))
         else:
             locatedState = findStateInStates(board, evaluatedStatesMin)
             if(locatedState != -1):
                 eval = evaluatedEvalsMin[locatedState]
                 return eval
-            #selse:
-                #print("Depth:", depth, "| Max:", len(evaluatedEvalsMax), "| Min:", len(evaluatedEvalsMin))
         
         successors = getSuccessors(board, mAgent)
         if depth == maxDepth or len(successors) == 0:
@@ -531,7 +544,6 @@ def getBestSuccessor(gameState, agent):
             return minValue(board, depth, alpha, beta, mAgent)
      
     def maxValue(board, depth, alpha, beta, mAgent):
-        #print("max, currDepth:", depth)
         maxEval = float('-inf')
         successors = getSuccessors(board, mAgent)
         nextAgent = 2 if mAgent == 1 else 1
@@ -582,25 +594,8 @@ def getBestSuccessor(gameState, agent):
     #print(bestSuccessor)
     return bestSuccessor
 
-#def generateMove(initState, finalState):
-#    blueInitLCoords = getCurrentLCoords(initState, 1)
-#    blueFinalLCoords = getCurrentLCoords(finalState, 1)
-#    redInitLCoords = getCurrentLCoords(initState, 2)
-#    redFinalLCoords = getCurrentLCoords(finalState, 2)
-#
-#    if(compareLCoords(blueInitLCoords, blueFinalLCoords)):
-#        
-#    else:
-#
-#
-    # find neutral piece that changed
-#    dotsInit = getDotCoords(initState)
-#    dotsFinal = getDotCoords(finalState)
-#
-#    if(dotsInit == dotsFinal):
-
+# checks if given coordinate is invalid for given state and agent - if coord is out of bounds or overlapping
 def invalidCoordinate(coord, gameState, agent):
-    #print(f"Debug: coord={coord}, type={type(coord)}")  # Debugging line
     i = coord[0]
     j = coord[1]
     return i < 0 or i > 3 or j < 0 or j > 3 or (gameState[i][j] != BLANK and gameState[i][j] != agent)
@@ -624,6 +619,7 @@ def getLegalDotPos(nextGameState, dot1, dot2):
 
     return validDotPositions
 
+# returns the current neutral piece coordinates in the given game state
 def getDotCoords(gameState):
     for i in range(0, 4):
         for j in range(0, 4):
@@ -639,14 +635,16 @@ def getDotCoords(gameState):
                         dot2Init = (i, j)
     return (dot1Init, dot2Init)
 
+# returns list of current L coordinates in given game state for given agent
 def getCurrentLCoords(gameState, agent):
-    lCoords = []
-    for i in range(0, 4):
+    lCoords = [] #list of tuples
+    for i in range(0, 4): #check for each possible i and j coordinate
         for j in range(0, 4):
-            if(gameState[i][j] == agent):
+            if(gameState[i][j] == agent): #checking if the current gamestate is the game state of the current agent
                 lCoords.append((i, j))
     return lCoords
 
+# compares all coordinates in list of given L coordinates and returns true of Ls are exactly the same
 def compareLCoords(lCoords1, lCoords2):
     for c1 in lCoords1:
         foundMatch = False
@@ -765,44 +763,48 @@ def getSuccessors(gameState, agent):
 
     return successorStates
 
+# returns true if the given move follows the valid move formats
 def isValidMoveFormat(move):
     # Define the format using a regular expression
     if(len(move) == 13):
         pattern = r"^\d \d [A-Za-z] \d \d \d \d$"
-        if not re.match(pattern, move):
+        if not re.match(pattern, move): # checking if input move matches pattern fo
             return False
         
-        nums = [0, 2, 6, 8, 10, 12]
-        for n in nums:
-            if(int(move[n]) not in range(1, 5)):
+        nums = [0, 2, 6, 8, 10, 12] # list for each index of move format
+        for n in nums: 
+            if(int(move[n]) not in range(1, 5)): # checks if each element in moves is in bounds
                 return False
 
         validOrientations = ['E', 'S', 'W', 'N']
-        if(move[4] not in validOrientations):
+        if(move[4] not in validOrientations): # checks if cardinal direction in moves is valid
             return False
         return True
+    
     elif(len(move) == 5):
-        pattern = r"^\d \d [A-Za-z]$"
+        pattern = r"^\d \d [A-Za-z]$" #checks validity if dots are not moved
         if not re.match(pattern, move):
             return False
         
         nums = [0, 2]
         for n in nums:
-            if(int(move[n]) not in range(1, 5)):
+            if(int(move[n]) not in range(1, 5)):  # checks if each element in moves is in bounds
                 return False
 
         validOrientations = ['E', 'S', 'W', 'N']
-        if(move[4] not in validOrientations):
+        if(move[4] not in validOrientations): # checks if cardinal direction in moves is valid
             return False
         return True
     else:
         return False
 
+# returns if the given coordinate is out of bounds or not
 def coordOutOfBounds(coord):
     if(coord[0] > 3 or coord[1] > 3 or coord[0] < 0 or coord[1] < 0):
         return False
     return True
 
+# returns if the given move is legal and valid
 def isValidMove(gameState, agent, move):
     if(isValidMoveFormat(move)):
         #if dot moved, len(move) == 13, otherwise len(move) = 5
@@ -811,31 +813,31 @@ def isValidMove(gameState, agent, move):
 
         orientation = move[4]
         lCoords = [(xMove, yMove)]
-        if(orientation == 'E'):
+        if(orientation == 'E'): # if direction is East, change coordinates to rotate L facing East
             coords = [(xMove, yMove + 1), (xMove + 1, yMove), (xMove + 2, yMove)]
             coords1 = [(xMove, yMove + 1), (xMove - 1, yMove), (xMove - 2, yMove)]
-            if(all(coordOutOfBounds(c) for c in coords)):
+            if(all(coordOutOfBounds(c) for c in coords)): # checks if orientation is in bounds
                 lCoords.extend(coords)
             else:
                 lCoords.extend(coords1)
-        elif(orientation == 'S'):
+        elif(orientation == 'S'): # if direction is South, change coordinates to rotate L facing South
             coords = [(xMove + 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)]
             coords1 = [(xMove + 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)]
-            if(all(coordOutOfBounds(c) for c in coords)):
+            if(all(coordOutOfBounds(c) for c in coords)): # checks if orientation is in bounds
                 lCoords.extend(coords)
             else:
                 lCoords.extend(coords1)
-        elif(orientation == 'W'):
+        elif(orientation == 'W'): # if direction is West, change coordinates to rotate L facing West
             coords = [(xMove, yMove - 1), (xMove - 1, yMove), (xMove - 2, yMove)]
             coords1 = [(xMove, yMove - 1), (xMove + 1, yMove), (xMove + 2, yMove)]
-            if(all(coordOutOfBounds(c) for c in coords)):
+            if(all(coordOutOfBounds(c) for c in coords)): # checks if orientation is in bounds
                 lCoords.extend(coords)
             else:
                 lCoords.extend(coords1)
-        elif(orientation == 'N'):
+        elif(orientation == 'N'): # if direction is North, change coordinates to rotate L facing North
             coords = [(xMove - 1, yMove), (xMove, yMove + 1), (xMove, yMove + 2)]
             coords1 = [(xMove - 1, yMove), (xMove, yMove - 1), (xMove, yMove - 2)]
-            if(all(coordOutOfBounds(c) for c in coords)):
+            if(all(coordOutOfBounds(c) for c in coords)): # checks if orientation is in bounds
                 lCoords.extend(coords)
             else:
                 lCoords.extend(coords1)
@@ -843,22 +845,22 @@ def isValidMove(gameState, agent, move):
         print(lCoords)
 
         for c in lCoords:
-            if(invalidCoordinate((c[0], c[1]), gameState, agent)):
+            if(invalidCoordinate((c[0], c[1]), gameState, agent)): #iterates through new orientation coordinates, checks if valid
                 return False
             
         currLCoords = getCurrentLCoords(gameState, agent)
-        if(compareLCoords(currLCoords, lCoords)):
+        if(compareLCoords(currLCoords, lCoords)): #checks if input orientation is same as current orientation
             print("Cannot move to same position. ", end="")
             return False
 
-        if(len(move) > 5):
-            dotInit = (int(move[8]) - 1, int(move[6]) - 1)
+        if(len(move) > 5): # checks for the dot inputs
+            dotInit = (int(move[8]) - 1, int(move[6]) - 1) # moving dot coordinates
             dotFinal = (int(move[12]) - 1, int(move[10]) - 1)
-            if(dotInit == dotFinal):
+            if(dotInit == dotFinal): #checks if input dot coordinates are the same as current dot coordinates
                 return False
-            if(gameState[dotInit[0]][dotInit[1]] != DOT):
+            if(gameState[dotInit[0]][dotInit[1]] != DOT): #checks if dot input is being moved on an L
                 return False
-            if(gameState[dotFinal[0]][dotFinal[1]] == DOT):
+            if(gameState[dotFinal[0]][dotFinal[1]] == DOT): #checks if dot input is being moved on another dot
                 return False
             for c in lCoords:
                 if(c[0] == dotFinal[0] and c[1] == dotFinal[1]):
@@ -867,4 +869,4 @@ def isValidMove(gameState, agent, move):
         return False
     return True
 
-menu()
+menu() # calling game
